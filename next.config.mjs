@@ -1,12 +1,28 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
-    // Pre-existing route handler params type errors (Next.js 15 migration)
-    // These are type-only errors and do not affect runtime behavior
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  // Exclude server-only packages from client bundle
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        net: false,
+        tls: false,
+        fs: false,
+        crypto: false,
+      };
+    }
+    // Prevent socket.io (server-only) from being bundled by webpack
+    config.externals = config.externals || [];
+    if (isServer) {
+      config.externals.push('socket.io');
+    }
+    return config;
   },
   images: {
     remotePatterns: [
