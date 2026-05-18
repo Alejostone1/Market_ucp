@@ -10,11 +10,16 @@ import { Label } from "@/components/ui/label";
 import { GraduationCap, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
+function getRolRedirect(rol: string): string {
+  if (rol === "ADMIN") return "/admin/dashboard";
+  return "/dashboard/student";
+}
+
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { login, usuario } = useAuth();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -26,15 +31,9 @@ export default function LoginPage() {
 
     try {
       const usuarioLogueado = await login(correo, contrasena);
-      
-      // Redirigir según el rol del usuario autenticado
-      if (usuarioLogueado?.rol === "ADMIN") {
-        router.push("/admin/dashboard");
-      } else {
-        router.push("/dashboard/student");
-      }
-    } catch (error) {
-      // El error ya se maneja en el contexto con toast
+      router.push(getRolRedirect(usuarioLogueado?.rol));
+    } catch {
+      // El error ya se muestra como toast en AuthContext
     } finally {
       setIsLoading(false);
     }
@@ -48,7 +47,7 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-gray-900 text-center">UCP Marketplace</h1>
         </div>
         <p className="text-gray-600 text-center">
-          Inicia sesión como estudiante
+          Inicia sesión con tu cuenta institucional
         </p>
       </CardHeader>
       <CardContent>
@@ -59,7 +58,7 @@ export default function LoginPage() {
               id="email"
               name="email"
               type="email"
-              placeholder="estudiante@ucp.edu.co"
+              placeholder="usuario@ucp.edu.co"
               required
               className="rounded-full"
             />
@@ -84,15 +83,6 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="rounded" />
-              <span className="text-gray-600">Recordarme</span>
-            </label>
-            <Link href="#" className="text-ucp-rojo hover:underline">
-              ¿Olvidaste tu contraseña?
-            </Link>
-          </div>
           <Button
             type="submit"
             className="w-full bg-ucp-rojo text-white hover:bg-red-700 rounded-full"
@@ -102,18 +92,16 @@ export default function LoginPage() {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex flex-col space-y-4 text-center">
-        <div className="text-sm text-gray-600">
+      <CardFooter className="flex flex-col space-y-3 text-center text-sm text-gray-600">
+        <p>
           ¿No tienes cuenta?{" "}
           <Link href="/register" className="text-ucp-rojo hover:underline font-medium">
             Regístrate
           </Link>
-        </div>
-        <div className="text-sm text-gray-600">
-          ¿Eres administrador?{" "}
-          <Link href="/admin/login" className="text-ucp-rojo hover:underline font-medium">
-            Inicia sesión aquí
-          </Link>
+        </p>
+        <div className="w-full border-t pt-3 space-y-1 text-xs text-gray-400">
+          <p>Roles disponibles: Estudiante · Aliado · Administrador</p>
+          <p>Todos inician sesión desde esta página</p>
         </div>
       </CardFooter>
     </Card>

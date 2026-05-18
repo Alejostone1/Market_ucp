@@ -2,30 +2,63 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Shield, Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 
 export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simular autenticación
-    setTimeout(() => {
+
+    const formData = new FormData(e.currentTarget);
+    const correo = formData.get("email") as string;
+    const contrasena = formData.get("password") as string;
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ correo, contrasena }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.message || "Error al iniciar sesión");
+        return;
+      }
+
+      if (data.usuario.rol !== "ADMIN") {
+        toast.error("Acceso denegado: esta sección es solo para administradores");
+        return;
+      }
+
+      // Guardar sesión
+      const usuarioString = JSON.stringify(data.usuario);
+      localStorage.setItem("usuario", usuarioString);
+      document.cookie = `usuario=${encodeURIComponent(usuarioString)}; path=/; max-age=604800`;
+
+      toast.success("Bienvenido, administrador");
+      router.push("/admin/dashboard");
+    } catch {
+      toast.error("Error de conexión. Intenta de nuevo.");
+    } finally {
       setIsLoading(false);
-      window.location.href = "/dashboard/admin";
-    }, 1000);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2 mb-8">
           <div className="w-12 h-12 bg-ucp-rojo rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-2xl">UCP</span>
@@ -52,6 +85,7 @@ export default function AdminLoginPage() {
                 <Label htmlFor="email">Correo administrativo</Label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="admin@ucp.edu.co"
                   required
@@ -63,6 +97,7 @@ export default function AdminLoginPage() {
                 <div className="relative">
                   <Input
                     id="password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     required
@@ -77,36 +112,25 @@ export default function AdminLoginPage() {
                   </button>
                 </div>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="rounded" />
-                  <span className="text-gray-600">Recordarme</span>
-                </label>
-                <Link href="#" className="text-ucp-rojo hover:underline">
-                  ¿Olvidaste tu contraseña?
-                </Link>
-              </div>
-              <Button 
-                type="submit" 
-                className="w-full bg-ucp-rojo hover:bg-red-700 rounded-full" 
+              <Button
+                type="submit"
+                className="w-full bg-ucp-rojo hover:bg-red-700 rounded-full"
                 disabled={isLoading}
               >
-                {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+                {isLoading ? "Verificando..." : "Iniciar Sesión"}
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-4 text-center">
-            <div className="text-sm text-gray-600">
-              ¿Eres estudiante?{" "}
+          <CardFooter className="flex flex-col space-y-3 text-center text-sm text-gray-600">
+            <p>
+              ¿Eres estudiante o aliado?{" "}
               <Link href="/login" className="text-ucp-rojo hover:underline font-medium">
-                Inicia sesión como estudiante
+                Inicia sesión aquí
               </Link>
-            </div>
-            <div className="text-sm text-gray-600">
-              <Link href="/" className="text-ucp-rojo hover:underline">
-                Volver al inicio
-              </Link>
-            </div>
+            </p>
+            <Link href="/" className="text-ucp-rojo hover:underline text-sm">
+              Volver al inicio
+            </Link>
           </CardFooter>
         </Card>
       </div>
