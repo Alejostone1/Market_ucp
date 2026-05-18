@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --ucp-rojo: #881a1d;
+    --ucp-naranja: #c55f23;
+    --ucp-amarillo: #f4c222;
+    --ucp-amarillo2: #fed800;
+    --ucp-gris: #848fae;
+    --ucp-verde: #177c4c;
+    --ucp-verde2: #298e09;
+    --ucp-morado: #88288b;
+    --ucp-dorado: #c0b278;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}

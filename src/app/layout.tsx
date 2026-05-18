@@ -1,0 +1,39 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
+import { CartProvider } from "@/contexts/CartContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { MessageProvider } from "@/contexts/MessageContext";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "UCP Marketplace - Universidad Católica de Pereira",
+  description: "Plataforma exclusiva para estudiantes de la Universidad Católica de Pereira",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="es" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
+        <AuthProvider>
+          <CartProvider>
+            <MessageProvider>
+              <div className="min-h-screen bg-gray-50">
+                <Header />
+                <main>{children}</main>
+                <Footer />
+              </div>
+            </MessageProvider>
+          </CartProvider>
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}

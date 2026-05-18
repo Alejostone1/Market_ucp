@@ -1,0 +1,374 @@
+generator cliente {
+  provider = "prisma-client-js"
+}
+
+datasource base_de_datos {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+//////////////////////////////////////////////////////
+// USUARIOS
+//////////////////////////////////////////////////////
+
+model Usuario {
+  id            String   @id @default(cuid())
+  nombre        String
+  correo        String   @unique
+  contrasena    String
+  rol           Rol      @default(ESTUDIANTE)
+
+  facultad      String?
+  semestre      Int?
+
+  avatarUrl     String?
+  telefono      String?
+
+  verificado    Boolean  @default(false)
+  bloqueado     Boolean  @default(false)
+
+  publicaciones        Publicacion[]
+  favoritos            Favorito[]
+  mensajesEnviados     Mensaje[]       @relation("emisor")
+  conversacionesA      Conversacion[]  @relation("participanteA")
+  conversacionesB      Conversacion[]  @relation("participanteB")
+  reportes             Reporte[]
+  notificaciones       Notificacion[]
+  historialModerado    HistorialPublicacion[]
+  carrito              CarritoItem[]
+
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+}
+
+//////////////////////////////////////////////////////
+// PUBLICACIONES (CORE DEL SISTEMA)
+//////////////////////////////////////////////////////
+
+model Publicacion {
+  id          String            @id @default(cuid())
+
+  titulo      String
+  descripcion String            @base_de_datos.Text
+
+  tipo        TipoPublicacion
+  estado      EstadoPublicacion @default(PENDIENTE)
+
+  categoriaId String
+  categoria   Categoria         @relation(fields: [categoriaId], references: [id])
+
+  autorId     String
+  autor       Usuario           @relation(fields: [autorId], references: [id])
+
+  precio      Decimal?          @base_de_datos.Decimal(10, 2)
+  tipoPrecio  TipoPrecio?
+
+  facultad    String?
+  vistas      Int               @default(0)
+
+  // EVENTOS
+  fechaEvento     DateTime?
+  ubicacionEvento String?
+  cupos           Int?
+  cuposOcupados   Int?          @default(0)
+
+  // CONVOCATORIAS
+  fechaLimite     DateTime?
+
+  notaRechazo     String?       @base_de_datos.Text
+
+  etiquetas   EtiquetaEnPublicacion[]
+  medios      Medio[]
+  favoritos   Favorito[]
+  reportes    Reporte[]
+  historial   HistorialPublicacion[]
+  carrito     CarritoItem[]
+
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  @@index([tipo])
+  @@index([estado])
+  @@index([categoriaId])
+  @@index([autorId])
+  @@index([creadoEn])
+}
+
+//////////////////////////////////////////////////////
+// CATEGORÍAS
+//////////////////////////////////////////////////////
+
+model Categoria {
+  id          String   @id @default(cuid())
+  nombre      String   @unique
+  slug        String   @unique
+  color       String
+  icono       String?
+  descripcion String?
+
+  publicaciones Publicacion[]
+
+  creadoEn    DateTime @default(now())
+}
+
+//////////////////////////////////////////////////////
+// ETIQUETAS (TAGS NORMALIZADOS)
+//////////////////////////////////////////////////////
+
+model Etiqueta {
+  id       String @id @default(cuid())
+  nombre   String @unique
+  usoCount Int    @default(0)
+
+  publicaciones EtiquetaEnPublicacion[]
+}
+
+model EtiquetaEnPublicacion {
+  publicacionId String
+  etiquetaId    String
+
+  publicacion   Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
+  etiqueta      Etiqueta    @relation(fields: [etiquetaId], references: [id])
+
+  @@id([publicacionId, etiquetaId])
+}
+
+//////////////////////////////////////////////////////
+// MULTIMEDIA (IMÁGENES / ARCHIVOS)
+//////////////////////////////////////////////////////
+
+model Medio {
+  id            String    @id @default(cuid())
+  url           String
+  tipo          TipoMedio
+  orden         Int       @default(0)
+  altText       String?
+  tamanoBytes   Int?
+
+  publicacionId String
+  publicacion   Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
+
+  creadoEn      DateTime @default(now())
+
+  @@index([publicacionId])
+}
+
+//////////////////////////////////////////////////////
+// CARRITO DE COMPRAS
+//////////////////////////////////////////////////////
+
+model CarritoItem {
+  id            String @id @default(cuid())
+
+  usuarioId     String
+  usuario       Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  publicacionId String
+  publicacion   Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
+
+  cantidad      Int @default(1)
+  precioUnitario Decimal @base_de_datos.Decimal(10, 2)
+
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  @@unique([usuarioId, publicacionId])
+  @@index([usuarioId])
+  @@index([publicacionId])
+}
+
+//////////////////////////////////////////////////////
+// FAVORITOS
+//////////////////////////////////////////////////////
+
+model Favorito {
+  id            String @id @default(cuid())
+
+  usuarioId     String
+  publicacionId String
+
+  usuario       Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  publicacion   Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
+
+  creadoEn      DateTime @default(now())
+
+  @@unique([usuarioId, publicacionId])
+  @@index([usuarioId])
+}
+
+//////////////////////////////////////////////////////
+// CONVERSACIONES + MENSAJES (CHAT INTERNO)
+//////////////////////////////////////////////////////
+
+model Conversacion {
+  id               String   @id @default(cuid())
+
+  participanteAId  String
+  participanteBId  String
+
+  participanteA    Usuario  @relation("participanteA", fields: [participanteAId], references: [id])
+  participanteB    Usuario  @relation("participanteB", fields: [participanteBId], references: [id])
+
+  mensajes         Mensaje[]
+
+  ultimoMensajeEn  DateTime?
+
+  creadoEn         DateTime @default(now())
+
+  @@unique([participanteAId, participanteBId])
+  @@index([participanteAId])
+  @@index([participanteBId])
+  @@index([ultimoMensajeEn])
+}
+
+model Mensaje {
+  id              String  @id @default(cuid())
+
+  contenido       String  @base_de_datos.Text
+
+  conversacionId  String
+  conversacion    Conversacion @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+
+  emisorId        String
+  emisor          Usuario @relation("emisor", fields: [emisorId], references: [id])
+
+  leido           Boolean  @default(false)
+  leidoEn         DateTime?
+
+  creadoEn        DateTime @default(now())
+
+  @@index([conversacionId])
+  @@index([emisorId])
+  @@index([creadoEn])
+}
+
+//////////////////////////////////////////////////////
+// REPORTES DE CONTENIDO
+//////////////////////////////////////////////////////
+
+model Reporte {
+  id            String         @id @default(cuid())
+
+  reportanteId  String
+  reportante    Usuario        @relation(fields: [reportanteId], references: [id])
+
+  publicacionId String
+  publicacion   Publicacion    @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
+
+  motivo        MotivoReporte
+  descripcion   String?        @base_de_datos.Text
+  estado        EstadoReporte  @default(PENDIENTE)
+
+  creadoEn      DateTime @default(now())
+
+  @@unique([reportanteId, publicacionId])
+  @@index([estado])
+  @@index([publicacionId])
+}
+
+//////////////////////////////////////////////////////
+// HISTORIAL DE MODERACIÓN (ADMIN)
+//////////////////////////////////////////////////////
+
+model HistorialPublicacion {
+  id              String   @id @default(cuid())
+
+  publicacionId   String
+  publicacion     Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
+
+  estadoAnterior  EstadoPublicacion
+  estadoNuevo     EstadoPublicacion
+
+  nota            String? @base_de_datos.Text
+
+  adminId         String
+  admin           Usuario @relation(fields: [adminId], references: [id])
+
+  creadoEn        DateTime @default(now())
+
+  @@index([publicacionId])
+  @@index([adminId])
+}
+
+//////////////////////////////////////////////////////
+// NOTIFICACIONES
+//////////////////////////////////////////////////////
+
+model Notificacion {
+  id           String           @id @default(cuid())
+
+  usuarioId    String
+  usuario      Usuario          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  tipo         TipoNotificacion
+  referenciaId String?
+  mensaje      String
+
+  leida        Boolean  @default(false)
+
+  creadoEn     DateTime @default(now())
+
+  @@index([usuarioId])
+  @@index([leida])
+  @@index([creadoEn])
+}
+
+//////////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////////
+
+enum Rol {
+  ESTUDIANTE
+  ALIADO
+  ADMIN
+}
+
+enum TipoPublicacion {
+  PRODUCTO
+  SERVICIO
+  EVENTO
+  CONVOCATORIA
+}
+
+enum EstadoPublicacion {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+  ARCHIVADA
+}
+
+enum TipoPrecio {
+  FIJO
+  POR_HORA
+  GRATIS
+  NEGOCIABLE
+}
+
+enum TipoMedio {
+  IMAGEN
+  VIDEO
+  ARCHIVO
+}
+
+enum MotivoReporte {
+  SPAM
+  CONTENIDO_INAPROPIADO
+  INFORMACION_FALSA
+  DUPLICADO
+  OTRO
+}
+
+enum EstadoReporte {
+  PENDIENTE
+  REVISADO
+  DESCARTADO
+}
+
+enum TipoNotificacion {
+  PUBLICACION_APROBADA
+  PUBLICACION_RECHAZADA
+  MENSAJE_NUEVO
+  FAVORITO_NUEVO
+  REPORTE_RESUELTO
+}
