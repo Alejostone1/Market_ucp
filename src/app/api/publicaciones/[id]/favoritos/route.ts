@@ -1,53 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+function getUserFromCookie(request: NextRequest): string | null {
+  const cookie = request.cookies.get('usuario');
+  if (!cookie) return null;
+  try {
+    const user = JSON.parse(decodeURIComponent(cookie.value));
+    return user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const usuarioId = getUserFromCookie(request);
+  if (!usuarioId) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+
   try {
-    const { id: publicacionId } = params;
+    const { id: publicacionId } = await params;
 
-    // Aquí deberías obtener el usuarioId del token de autenticación
-    // Por ahora, lo simulamos
-    const usuarioId = 'temp-user-id'; // Reemplazar con lógica real
-
-    // Verificar si ya es favorito
-    const favoritoExistente = await prisma.favorito.findUnique({
-      where: {
-        usuarioId_publicacionId: {
-          usuarioId,
-          publicacionId,
-        },
-      },
+    const existente = await prisma.favorito.findUnique({
+      where: { usuarioId_publicacionId: { usuarioId, publicacionId } },
     });
 
-    if (favoritoExistente) {
-      // Eliminar de favoritos
-      await prisma.favorito.delete({
-        where: {
-          id: favoritoExistente.id,
-        },
-      });
-
-      return NextResponse.json({ message: 'Eliminado de favoritos' });
+    if (existente) {
+      await prisma.favorito.delete({ where: { id: existente.id } });
+      return NextResponse.json({ favorito: false, message: 'Eliminado de favoritos' });
     } else {
-      // Agregar a favoritos
-      await prisma.favorito.create({
-        data: {
-          usuarioId,
-          publicacionId,
-        },
-      });
-
-      return NextResponse.json({ message: 'Agregado a favoritos' });
+      await prisma.favorito.create({ data: { usuarioId, publicacionId } });
+      return NextResponse.json({ favorito: true, message: 'Agregado a favoritos' });
     }
   } catch (error) {
     console.error('Error al gestionar favoritos:', error);
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const usuarioId = getUserFromCookie(request);
+  if (!usuarioId) {
+    return NextResponse.json({ favorito: false });
+  }
+
+  const { id: publicacionId } = await params;
+  const existente = await prisma.favorito.findUnique({
+    where: { usuarioId_publicacionId: { usuarioId, publicacionId } },
+  });
+
+  return NextResponse.json({ favorito: !!existente });
 }
