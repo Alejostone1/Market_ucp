@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 function getRolRedirect(rol: string): string {
   if (rol === "ADMIN") return "/admin/dashboard";
+  if (rol === "ALIADO") return "/dashboard/partner";
   return "/dashboard/student";
 }
 

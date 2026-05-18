@@ -52,7 +52,7 @@ export default function RegisterPage() {
       document.cookie = `usuario=${encodeURIComponent(usuarioString)}; path=/; max-age=604800`;
 
       toast.success("¡Cuenta creada exitosamente!");
-      router.push("/dashboard/student");
+      router.push(rol === "ALIADO" ? "/dashboard/partner" : "/dashboard/student");
     } catch {
       toast.error("Error de conexión. Intenta de nuevo.");
     } finally {
