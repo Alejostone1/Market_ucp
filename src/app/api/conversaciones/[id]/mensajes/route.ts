@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { emitSocketEvent } from '@/lib/socket-emit';
 
 function getUserFromCookie(request: NextRequest): string | null {
   const cookie = request.cookies.get('usuario');
@@ -158,16 +159,14 @@ export async function POST(
       leidoEn: mensaje.leidoEn ? mensaje.leidoEn.toISOString() : null,
     };
 
-    // Emit real-time event to everyone in the conversation room
-    if (global.io) {
-      global.io.to(`conv:${conversationId}`).emit('message:new', payload);
-      // Also notify the other user's personal room (for sidebar unread badge)
-      global.io.to(`user:${otherUserId}`).emit('conversation:updated', {
+    await Promise.all([
+      emitSocketEvent(`conv:${conversationId}`, 'message:new', payload),
+      emitSocketEvent(`user:${otherUserId}`, 'conversation:updated', {
         conversationId,
         lastMessage: contenido,
         lastMessageTime: payload.creadoEn,
-      });
-    }
+      }),
+    ]);
 
     return NextResponse.json(payload, { status: 201 });
   } catch (error) {

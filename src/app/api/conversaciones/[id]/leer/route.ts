@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { emitSocketEvent } from '@/lib/socket-emit';
 
 function getUserFromCookie(request: NextRequest): string | null {
   const cookie = request.cookies.get('usuario');
@@ -45,12 +46,10 @@ export async function POST(
       data: { leido: true, leidoEn: new Date() },
     });
 
-    if (global.io) {
-      global.io.to(`conv:${conversationId}`).emit('message:read', {
-        conversationId,
-        readBy: userId,
-      });
-    }
+    await emitSocketEvent(`conv:${conversationId}`, 'message:read', {
+      conversationId,
+      readBy: userId,
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {
