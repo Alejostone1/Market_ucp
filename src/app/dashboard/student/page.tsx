@@ -50,19 +50,11 @@ interface Publicacion {
   fechaLimite: string | null;
 }
 
-interface Mensaje {
-  id: string;
-  contenido: string;
-  creadoEn: string;
-  remitente: {
-    nombre: string;
-  };
-}
 
 export default function StudentDashboardPage() {
   const { usuario, logout, isLoggingOut } = useAuth();
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
-  const [mensajes, setMensajes] = useState<Mensaje[]>([]);
+  const [mensajes, setMensajes] = useState<{ id: string; otherUser: { nombre: string }; lastMessage: string; timestamp: string }[]>([]);
   const [marketplacePublicaciones, setMarketplacePublicaciones] = useState<Publicacion[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -234,14 +226,14 @@ export default function StudentDashboardPage() {
               <h2 className="text-xl font-bold text-gray-900 mb-4">Actividad reciente</h2>
               {mensajes.length > 0 ? (
                 <div className="space-y-3">
-                  {mensajes.slice(0, 5).map((mensaje) => (
-                    <div key={mensaje.id} className="flex items-center gap-3 text-sm">
+                  {mensajes.slice(0, 5).map((conv) => (
+                    <div key={conv.id} className="flex items-center gap-3 text-sm">
                       <div className="w-2 h-2 bg-blue-600 rounded-full" />
                       <span className="text-gray-700">
-                        Mensaje de {mensaje.remitente.nombre}: "{mensaje.contenido.substring(0, 50)}..."
+                        Conversación con {conv.otherUser.nombre}: "{conv.lastMessage.substring(0, 50)}"
                       </span>
                       <span className="text-gray-500 ml-auto">
-                        {new Date(mensaje.creadoEn).toLocaleDateString()}
+                        {new Date(conv.timestamp).toLocaleDateString()}
                       </span>
                     </div>
                   ))}
