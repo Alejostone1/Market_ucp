@@ -53,7 +53,7 @@ export function Header() {
       )}
       {usuario?.rol === "ADMIN" && (
         <>
-          <Link href="/dashboard/admin" className={`text-sm font-medium transition-colors hover:text-ucp-rojo ${isActive('/dashboard/admin') ? 'text-ucp-rojo' : 'text-gray-700'}`}>
+          <Link href="/admin/dashboard" className={`text-sm font-medium transition-colors hover:text-ucp-rojo ${isActive('/admin/dashboard') ? 'text-ucp-rojo' : 'text-gray-700'}`}>
             <LayoutDashboard className="w-4 h-4 inline mr-1" />
             Admin
           </Link>
@@ -67,10 +67,8 @@ export function Header() {
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link href={isAuthenticated ? 
-            (usuario?.rol === "ESTUDIANTE" ? "/dashboard/student" : 
-             usuario?.rol === "ADMIN" ? "/dashboard/admin" : 
-             usuario?.rol === "ALIADO" ? "/dashboard/partner" : "/") : "/"} 
+          <Link href={isAuthenticated ?
+            (usuario?.rol === "ADMIN" ? "/admin/dashboard" : "/dashboard/student") : "/"}
             className="flex items-center gap-2 shrink-0">
             <img
               src="/logo_ucp.png"
@@ -310,9 +308,9 @@ export function Header() {
                       <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Administración</h3>
                       <div className="space-y-1">
                         <Link
-                          href="/dashboard/admin"
+                          href="/admin/dashboard"
                           className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                            isActive('/dashboard/admin') 
+                            isActive('/admin/dashboard') 
                               ? 'bg-ucp-rojo/10 text-ucp-rojo font-medium' 
                               : 'hover:bg-gray-100 text-gray-700'
                           }`}
