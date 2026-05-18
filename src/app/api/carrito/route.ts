@@ -1,23 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+function getUserFromCookie(request: NextRequest): string | null {
+  const cookie = request.cookies.get('usuario');
+  if (!cookie) return null;
+  try {
+    const user = JSON.parse(decodeURIComponent(cookie.value));
+    return user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function GET(request: NextRequest) {
+  const usuarioId = getUserFromCookie(request);
+  if (!usuarioId) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+
+  try {
+    const items = await prisma.carritoItem.findMany({
+      where: { usuarioId },
+      include: {
+        publicacion: {
+          include: {
+            autor: { select: { id: true, nombre: true, avatarUrl: true } },
+            medios: { orderBy: { orden: 'asc' }, take: 1 },
+            categoria: true,
+          },
+        },
+      },
+      orderBy: { creadoEn: 'desc' },
+    });
+    return NextResponse.json(items);
+  } catch (error) {
+    console.error('Error al obtener carrito:', error);
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
+  }
+}
 
 export async function POST(request: NextRequest) {
+  const usuarioId = getUserFromCookie(request);
+  if (!usuarioId) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+
   try {
-    const { publicacionId, cantidad, precioUnitario } = await request.json();
+    const { publicacionId, cantidad = 1, precioUnitario } = await request.json();
 
-    // Obtener el usuario del token (aquí deberías implementar tu lógica de autenticación)
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
-    // Por ahora, simulamos obtener el usuario ID del token
-    // En producción, deberías verificar el JWT y obtener el usuario
-    const token = authHeader.replace('Bearer ', '');
-    const usuarioId = 'temp-user-id'; // Reemplazar con lógica real
-
-    // Verificar si la publicación existe y está aprobada
     const publicacion = await prisma.publicacion.findUnique({
       where: { id: publicacionId },
     });
@@ -30,60 +60,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Publicación no disponible' }, { status: 400 });
     }
 
-    // Verificar si el producto ya está en el carrito
-    const existingItem = await prisma.carritoItem.findUnique({
-      where: {
-        usuarioId_publicacionId: {
-          usuarioId,
-          publicacionId,
-        },
-      },
+    const precioFinal = precioUnitario ?? publicacion.precio ?? 0;
+
+    const existente = await prisma.carritoItem.findUnique({
+      where: { usuarioId_publicacionId: { usuarioId, publicacionId } },
     });
 
-    if (existingItem) {
-      // Actualizar cantidad
-      const updatedItem = await prisma.carritoItem.update({
-        where: { id: existingItem.id },
-        data: {
-          cantidad: existingItem.cantidad + cantidad,
-        },
-        include: {
-          publicacion: {
-            include: {
-              autor: true,
-              medios: true,
-            },
-          },
-        },
+    if (existente) {
+      const updated = await prisma.carritoItem.update({
+        where: { id: existente.id },
+        data: { cantidad: existente.cantidad + cantidad },
+        include: { publicacion: { include: { medios: true } } },
       });
-
-      return NextResponse.json(updatedItem);
-    } else {
-      // Crear nuevo item en el carrito
-      const newItem = await prisma.carritoItem.create({
-        data: {
-          usuarioId,
-          publicacionId,
-          cantidad,
-          precioUnitario,
-        },
-        include: {
-          publicacion: {
-            include: {
-              autor: true,
-              medios: true,
-            },
-          },
-        },
-      });
-
-      return NextResponse.json(newItem);
+      return NextResponse.json(updated);
     }
+
+    const newItem = await prisma.carritoItem.create({
+      data: { usuarioId, publicacionId, cantidad, precioUnitario: precioFinal },
+      include: { publicacion: { include: { medios: true } } },
+    });
+    return NextResponse.json(newItem, { status: 201 });
   } catch (error) {
     console.error('Error al agregar al carrito:', error);
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }

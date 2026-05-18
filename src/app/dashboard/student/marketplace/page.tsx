@@ -374,8 +374,9 @@ export default function MarketplacePage() {
               {viewMode === "grid" ? (
                 /* Vista Grid */
                 <div>
-                  {/* Imagen */}
-                  <div className="relative h-48 bg-gray-100">
+                  {/* Imagen clickable */}
+                  <Link href={`/publication/${publicacion.id}`}>
+                  <div className="relative h-48 bg-gray-100 cursor-pointer">
                     {publicacion.medios.length > 0 ? (
                       <img
                         src={publicacion.medios[0].url}
@@ -406,17 +407,20 @@ export default function MarketplacePage() {
                       variant="ghost"
                       size="icon"
                       className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white"
-                      onClick={() => toggleFavorito(publicacion.id)}
+                      onClick={(e) => { e.preventDefault(); toggleFavorito(publicacion.id); }}
                     >
-                      <Heart 
-                        className={`w-4 h-4 ${(publicacion.favoritos?.length || 0) > 0 ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} 
+                      <Heart
+                        className={`w-4 h-4 ${(publicacion.favoritos?.length || 0) > 0 ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
                       />
                     </Button>
                   </div>
+                  </Link>
 
                   {/* Contenido */}
                   <div className="p-6">
-                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{publicacion.titulo}</h3>
+                    <Link href={`/publication/${publicacion.id}`}>
+                      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-ucp-rojo cursor-pointer">{publicacion.titulo}</h3>
+                    </Link>
                     <p className="text-sm text-gray-600 mb-4 line-clamp-2">{publicacion.descripcion}</p>
 
                     {/* Autor */}
@@ -445,6 +449,11 @@ export default function MarketplacePage() {
                         )}
                       </div>
                       <div className="flex gap-2">
+                        <Link href={`/publication/${publicacion.id}`}>
+                          <Button size="icon" variant="outline" className="rounded-full" title="Ver detalles">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </Link>
                         <ContactButton
                           vendorId={publicacion.autor.id}
                           vendorName={publicacion.autor.nombre}
@@ -483,24 +492,28 @@ export default function MarketplacePage() {
                 /* Vista Lista */
                 <div className="p-6">
                   <div className="flex gap-4">
-                    <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                      {publicacion.medios.length > 0 ? (
-                        <img
-                          src={publicacion.medios[0].url}
-                          alt={publicacion.titulo}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <ShoppingBag className="w-8 h-8 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
+                    <Link href={`/publication/${publicacion.id}`} className="flex-shrink-0">
+                      <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden cursor-pointer">
+                        {publicacion.medios.length > 0 ? (
+                          <img
+                            src={publicacion.medios[0].url}
+                            alt={publicacion.titulo}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ShoppingBag className="w-8 h-8 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                    </Link>
 
                     <div className="flex-1">
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 mb-1">{publicacion.titulo}</h3>
+                          <Link href={`/publication/${publicacion.id}`}>
+                            <h3 className="font-semibold text-gray-900 mb-1 hover:text-ucp-rojo cursor-pointer">{publicacion.titulo}</h3>
+                          </Link>
                           <p className="text-sm text-gray-600 mb-2">{publicacion.descripcion}</p>
                           
                           <div className="flex items-center gap-3 text-sm text-gray-500">
@@ -538,14 +551,19 @@ export default function MarketplacePage() {
                           )}
 
                           <div className="flex gap-2 mt-2">
+                            <Link href={`/publication/${publicacion.id}`}>
+                              <Button variant="outline" size="icon" className="rounded-full" title="Ver detalles">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </Link>
                             <Button
                               variant="ghost"
                               size="icon"
                               className="rounded-full"
                               onClick={() => toggleFavorito(publicacion.id)}
                             >
-                              <Heart 
-                                className={`w-4 h-4 ${(publicacion.favoritos?.length || 0) > 0 ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} 
+                              <Heart
+                                className={`w-4 h-4 ${(publicacion.favoritos?.length || 0) > 0 ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
                               />
                             </Button>
                             <ContactButton
