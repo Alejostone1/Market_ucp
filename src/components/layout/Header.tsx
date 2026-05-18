@@ -68,8 +68,7 @@ export function Header() {
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
           <Link href={isAuthenticated ?
-            (usuario?.rol === "ADMIN" ? "/admin/dashboard" :
-             usuario?.rol === "ALIADO" ? "/dashboard/partner" : "/dashboard/student") : "/"}
+            (usuario?.rol === "ADMIN" ? "/admin/dashboard" : "/dashboard/student") : "/"}
             className="flex items-center gap-2 shrink-0">
             <img
               src="/logo_ucp.png"

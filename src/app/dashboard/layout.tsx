@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Package, MessageSquare, User, LogOut, Search, ShoppingCart, Briefcase } from "lucide-react";
+import { Home, Package, MessageSquare, User, LogOut, Search, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-const studentNavItems = [
+const navItems = [
   { title: "Inicio", href: "/dashboard/student", icon: Home },
   { title: "Mis Publicaciones", href: "/dashboard/student/publications", icon: Package },
   { title: "Mensajes", href: "/dashboard/student/messages", icon: MessageSquare },
@@ -17,22 +17,14 @@ const studentNavItems = [
   { title: "Carrito", href: "/dashboard/student/cart", icon: ShoppingCart },
 ];
 
-const partnerNavItems = [
-  { title: "Inicio", href: "/dashboard/partner", icon: Home },
-  { title: "Mis Publicaciones", href: "/dashboard/student/publications", icon: Package },
-  { title: "Mensajes", href: "/dashboard/student/messages", icon: MessageSquare },
-  { title: "Perfil", href: "/dashboard/student/profile", icon: User },
-  { title: "Marketplace", href: "/dashboard/student/marketplace", icon: Search },
-];
-
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { usuario, logout, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading) {
-      if (usuario?.rol === "ADMIN") router.push("/admin/dashboard");
+    if (!isLoading && usuario?.rol === "ADMIN") {
+      router.push("/admin/dashboard");
     }
   }, [usuario, isLoading, router]);
 
@@ -40,15 +32,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (window.confirm("¿Estás seguro de que quieres cerrar sesión?")) logout();
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-ucp-rojo border-t-transparent rounded-full animate-spin mx-auto" />
-      </div>
-    );
-  }
-
-  if (usuario?.rol === "ADMIN") {
+  if (isLoading || usuario?.rol === "ADMIN") {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-ucp-rojo border-t-transparent rounded-full animate-spin mx-auto" />
@@ -57,10 +41,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   const isAliado = usuario?.rol === "ALIADO";
-  const navItems = isAliado ? partnerNavItems : studentNavItems;
-  const dashboardHome = isAliado ? "/dashboard/partner" : "/dashboard/student";
-  const bannerLabel = isAliado ? "Panel de Aliado" : "Dashboard Estudiantil";
-  const bannerEmoji = isAliado ? "🤝" : "🎓";
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -70,9 +50,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold">
-                ¡Bienvenido, {usuario?.nombre}! {bannerEmoji}
+                ¡Bienvenido, {usuario?.nombre}! {isAliado ? "🤝" : "🎓"}
               </h1>
-              <p className="text-red-100 text-sm">{bannerLabel} - UCP Marketplace</p>
+              <p className="text-red-100 text-sm">
+                {isAliado ? "Panel de Aliado" : "Dashboard Estudiantil"} - UCP Marketplace
+              </p>
             </div>
             <div className="hidden md:block">
               <p className="text-sm text-red-100">Conectado</p>
@@ -86,13 +68,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Sidebar */}
         <aside className="w-64 bg-white border-r min-h-screen p-6 hidden md:block">
           <div className="mb-8">
-            <Link href={dashboardHome} className="flex items-center gap-2">
+            <Link href="/dashboard/student" className="flex items-center gap-2">
               <div className="w-10 h-10 bg-ucp-rojo rounded-lg flex items-center justify-center">
-                {isAliado ? <Briefcase className="w-5 h-5 text-white" /> : <span className="text-white font-bold text-xl">UCP</span>}
+                <span className="text-white font-bold text-xl">UCP</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">{isAliado ? "Aliado UCP" : "Marketplace"}</h1>
-                <p className="text-xs text-gray-500">{isAliado ? "Panel de Socio" : "Dashboard"}</p>
+                <h1 className="text-lg font-bold text-gray-900">Marketplace</h1>
+                <p className="text-xs text-gray-500">{isAliado ? "Aliado" : "Estudiante"}</p>
               </div>
             </Link>
           </div>
