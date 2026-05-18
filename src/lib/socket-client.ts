@@ -3,7 +3,11 @@ import { io, Socket } from 'socket.io-client';
 let socketInstance: Socket | null = null;
 let currentUserId: string | null = null;
 
-export function getSocket(userId: string): Socket {
+const SOCKET_ENABLED = process.env.NEXT_PUBLIC_SOCKET_ENABLED === 'true';
+
+export function getSocket(userId: string): Socket | null {
+  if (!SOCKET_ENABLED) return null;
+
   if (socketInstance?.connected && currentUserId === userId) {
     return socketInstance;
   }

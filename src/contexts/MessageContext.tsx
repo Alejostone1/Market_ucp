@@ -81,6 +81,7 @@ export function MessageProvider({ children }: { children: ReactNode }) {
 
     import("@/lib/socket-client").then(({ getSocket }) => {
       const socket = getSocket(usuario.id);
+      if (!socket) return;
 
       const onConversationUpdated = () => {
         refreshMessages();

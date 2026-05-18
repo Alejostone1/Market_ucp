@@ -19,9 +19,10 @@ export function useSocket() {
       return;
     }
 
-    // Lazy import to avoid SSR issues
     import('@/lib/socket-client').then(({ getSocket }) => {
       const sock = getSocket(usuario.id);
+      if (!sock) return;
+
       socketRef.current = sock;
 
       const onConnect = () => setIsConnected(true);
