@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Search, Package, MessageCircle, Shield, TrendingUp, Users } from "lucide-react";
+import { Search, Package, MessageCircle, Shield, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PublicationCard } from "@/components/marketplace/PublicationCard";
@@ -150,13 +150,6 @@ export default function HomePage() {
                   <Search className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" />
                   Explorar Productos
                   <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                </Button>
-              </Link>
-              <Link href="/dashboard/student/publications/new">
-                <Button size="lg" variant="outline" className="group relative border-2 border-white/30 text-white hover:bg-white/10 hover:border-white rounded-full text-lg px-10 py-4 font-bold backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-white/10">
-                  <Package className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" />
-                  Publicar Ahora
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                 </Button>
               </Link>
             </div>
