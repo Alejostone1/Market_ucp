@@ -38,7 +38,7 @@ export function ContactButton({
 
   const handleClick = async () => {
     if (!isAuthenticated) {
-      router.push("/login");
+      window.location.href = "/login";
       return;
     }
 
