@@ -246,14 +246,16 @@ export function PublicationCard({ product }: ProductCardProps) {
               Ver más
             </Button>
           </Link>
-          <ContactButton
-            vendorId={product.autor.id}
-            vendorName={product.autor.nombre}
-            label=""
-            showIcon={true}
-            size="icon"
-            className="shrink-0"
-          />
+          {product.autor?.id && (
+            <ContactButton
+              vendorId={product.autor.id}
+              vendorName={product.autor.nombre ?? "Usuario"}
+              label=""
+              showIcon={true}
+              size="icon"
+              className="shrink-0"
+            />
+          )}
           {product.tipo !== "EVENTO" && product.tipo !== "CONVOCATORIA" && (
             <Button
               onClick={handleAddToCart}
