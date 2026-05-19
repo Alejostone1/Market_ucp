@@ -127,18 +127,18 @@ export default function PublicationDetailPage() {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Breadcrumb */}
-        <div className="mb-6">
+        <div className="mb-4">
           <Link href="/explore">
-            <Button variant="ghost" className="rounded-full -ml-4">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver al Marketplace
+            <Button variant="ghost" className="rounded-full -ml-2 text-sm">
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              Volver
             </Button>
           </Link>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 mb-12">
+        <div className="grid lg:grid-cols-2 gap-4 sm:gap-8 mb-8 sm:mb-12">
           {/* Image Gallery */}
           <div>
             <div className="bg-white rounded-xl overflow-hidden mb-4 aspect-square">
@@ -168,135 +168,143 @@ export default function PublicationDetailPage() {
           {/* Product Info */}
           <div>
             <Card className="border-0 shadow-lg rounded-xl">
-              <CardContent className="p-8">
-                <div className="flex items-start justify-between gap-4 mb-4">
-                  <div className="flex-1">
-                    <Badge className="mb-3 bg-blue-600 text-white rounded-full">
+              <CardContent className="p-4 sm:p-6 lg:p-8">
+                {/* Header: título + acciones */}
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="flex-1 min-w-0">
+                    <Badge className="mb-2 bg-blue-600 text-white rounded-full text-xs">
                       {product.tipo === "PRODUCTO" ? "Producto" : product.tipo === "SERVICIO" ? "Servicio" : product.tipo === "EVENTO" ? "Evento" : "Convocatoria"}
                     </Badge>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 leading-tight">
                       {product.titulo}
                     </h1>
-                    <Badge variant="outline" className="rounded-full">
+                    <Badge variant="outline" className="rounded-full text-xs">
                       {product.categoria.nombre}
                     </Badge>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1 shrink-0">
                     <Button
                       variant="outline"
                       size="icon"
-                      className="rounded-full"
+                      className="rounded-full w-9 h-9"
                       onClick={() => setIsFavorite(!isFavorite)}
                     >
-                      <Heart className={`w-5 h-5 ${isFavorite ? 'fill-ucp-rojo text-ucp-rojo' : ''}`} />
+                      <Heart className={`w-4 h-4 ${isFavorite ? 'fill-ucp-rojo text-ucp-rojo' : ''}`} />
                     </Button>
-                    <Button variant="outline" size="icon" className="rounded-full">
-                      <Share2 className="w-5 h-5" />
+                    <Button variant="outline" size="icon" className="rounded-full w-9 h-9">
+                      <Share2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
 
-                <div className="mb-6">
-                  <div className="text-4xl font-bold text-ucp-rojo mb-1">
+                {/* Precio */}
+                <div className="mb-5">
+                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-ucp-rojo">
                     {product.precio ? formatPrice(product.precio) : "Gratis"}
                   </div>
-                  {product.tipoPrecio === "POR_HORA" && (
-                    <p className="text-gray-500">por hora</p>
-                  )}
-                  {product.tipoPrecio === "FIJO" && (
-                    <p className="text-gray-500">precio fijo</p>
-                  )}
-                  {product.tipoPrecio === "NEGOCIABLE" && (
-                    <p className="text-gray-500">negociable</p>
-                  )}
+                  {product.tipoPrecio === "POR_HORA" && <p className="text-sm text-gray-500">por hora</p>}
+                  {product.tipoPrecio === "FIJO" && <p className="text-sm text-gray-500">precio fijo</p>}
+                  {product.tipoPrecio === "NEGOCIABLE" && <p className="text-sm text-gray-500">negociable</p>}
                 </div>
 
-                <Separator className="my-6" />
+                <Separator className="my-4" />
 
-                <div className="space-y-4 mb-6">
+                {/* Meta info */}
+                <div className="space-y-2 mb-5 text-sm">
                   <div className="flex items-center gap-2 text-gray-600">
-                    <Calendar className="w-5 h-5" />
+                    <Calendar className="w-4 h-4 shrink-0" />
                     <span>Publicado el {formatDate(product.creadoEn)}</span>
                   </div>
                   {product.autor.facultad && (
                     <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin className="w-5 h-5" />
+                      <MapPin className="w-4 h-4 shrink-0" />
                       <span>{product.autor.facultad}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-ucp-verde">
-                    <Shield className="w-5 h-5" />
+                    <Shield className="w-4 h-4 shrink-0" />
                     <span className="font-medium">Vendedor verificado UCP</span>
                   </div>
                 </div>
 
-                <Separator className="my-6" />
+                <Separator className="my-4" />
 
-                <div className="mb-6">
-                  <h2 className="font-semibold text-gray-900 mb-3">Descripción</h2>
-                  <p className="text-gray-700 leading-relaxed">
+                {/* Descripción */}
+                <div className="mb-5">
+                  <h2 className="font-semibold text-gray-900 mb-2">Descripción</h2>
+                  <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
                     {product.descripcion || "Sin descripción"}
                   </p>
                 </div>
 
-                <Separator className="my-6" />
+                <Separator className="my-4" />
 
-                {/* Seller Info */}
-                <div className="mb-6">
-                  <h2 className="font-semibold text-gray-900 mb-3">Vendedor</h2>
-                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <Avatar className="w-16 h-16">
+                {/* Vendedor */}
+                <div className="mb-5">
+                  <h2 className="font-semibold text-gray-900 mb-2">Vendedor</h2>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <Avatar className="w-12 h-12 shrink-0">
                       <AvatarImage src={product.autor.avatarUrl || ""} />
                       <AvatarFallback>{product.autor.nombre[0]}</AvatarFallback>
                     </Avatar>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{product.autor.nombre}</h3>
-                      <p className="text-sm text-gray-600">{product.autor.correo}</p>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-gray-900 truncate">{product.autor.nombre}</h3>
+                      <p className="text-xs text-gray-500 truncate">{product.autor.correo}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <ContactButton
-                      vendorId={product.autor.id}
-                      vendorName={product.autor.nombre}
-                      label="Contactar vendedor"
-                      className="w-full"
-                    />
+                {/* Botones de acción — apilados en móvil */}
+                <div className="flex flex-col gap-3">
+                  <ContactButton
+                    vendorId={product.autor.id}
+                    vendorName={product.autor.nombre}
+                    label="Contactar vendedor"
+                    showIcon={true}
+                    size="lg"
+                    className="w-full justify-center"
+                  />
+
+                  {product.tipo !== "EVENTO" && product.tipo !== "CONVOCATORIA" && (
                     <Button
-                      className="flex-1 bg-ucp-rojo text-white hover:bg-red-700 rounded-full"
-                      onClick={() => {
-                        addToCart({
-                          id: product.id,
-                          title: product.titulo,
-                          price: product.precio || 0,
-                          image: product.medios && product.medios.length > 0 ? product.medios[0].url : "",
-                          category: product.tipo === "PRODUCTO" ? "product" : "service",
-                          seller: {
-                            name: product.autor.nombre,
-                            faculty: product.autor.facultad || "",
-                            phone: product.autor.telefono || "",
-                          },
-                          quantity: 1,
-                        });
+                      size="lg"
+                      className="w-full bg-ucp-rojo text-white hover:bg-red-700 rounded-full"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch("/api/carrito", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ publicacionId: product.id, cantidad: 1 }),
+                          });
+                          if (res.ok) {
+                            addToCart({
+                              id: product.id,
+                              title: product.titulo,
+                              price: product.precio || 0,
+                              image: product.medios?.[0]?.url || "",
+                              category: product.tipo === "PRODUCTO" ? "product" : "service",
+                              seller: { name: product.autor.nombre, faculty: product.autor.facultad || "", phone: product.autor.telefono || "" },
+                              quantity: 1,
+                            });
+                          }
+                        } catch { /* silent */ }
                       }}
                     >
                       <ShoppingCart className="w-5 h-5 mr-2" />
                       {product.tipo === "PRODUCTO" ? "Agregar al carrito" : "Solicitar servicio"}
                     </Button>
-                  </div>
+                  )}
+
                   <Button
+                    size="lg"
                     className="w-full bg-green-600 text-white hover:bg-green-700 rounded-full"
                     onClick={() => {
-                      const message = `Hola! Me interesa comprar "${product.titulo}" por ${product.precio ? formatPrice(product.precio) : "Gratis"}. ¿Está disponible?`;
+                      const message = `Hola! Me interesa "${product.titulo}" por ${product.precio ? formatPrice(product.precio) : "Gratis"}. ¿Está disponible?`;
                       const sellerPhone = product.autor.telefono || "573000000000";
-                      const whatsappUrl = `https://wa.me/${sellerPhone}?text=${encodeURIComponent(message)}`;
-                      window.open(whatsappUrl, '_blank');
+                      window.open(`https://wa.me/${sellerPhone}?text=${encodeURIComponent(message)}`, '_blank');
                     }}
                   >
-                    Comprar por WhatsApp
+                    Contactar por WhatsApp
                   </Button>
                 </div>
               </CardContent>
