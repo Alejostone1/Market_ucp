@@ -55,10 +55,20 @@ export async function POST(request: NextRequest) {
     // Retornar datos del usuario (sin contraseña)
     const { contrasena: _, ...usuarioSinContrasena } = usuario;
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       message: "Inicio de sesión exitoso",
       usuario: usuarioSinContrasena,
     });
+
+    // Setear cookie desde el servidor para que esté disponible en API routes
+    response.cookies.set("usuario", encodeURIComponent(JSON.stringify(usuarioSinContrasena)), {
+      path: "/",
+      maxAge: 604800,
+      httpOnly: false,
+      sameSite: "lax",
+    });
+
+    return response;
   } catch (error) {
     console.error("Error en login:", error);
     return NextResponse.json(
