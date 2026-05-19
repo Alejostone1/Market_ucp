@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
 
 export interface CartItem {
@@ -31,6 +31,26 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+
+  useEffect(() => {
+    fetch("/api/carrito")
+      .then((r) => r.ok ? r.json() : [])
+      .then((data: { publicacionId: string; cantidad: number; precioUnitario: number; publicacion?: { titulo: string; medios?: { url: string }[]; autor?: { nombre: string; telefono?: string | null } } }[]) => {
+        if (!Array.isArray(data)) return;
+        setItems(
+          data.map((item) => ({
+            id: item.publicacionId,
+            title: item.publicacion?.titulo || "",
+            price: Number(item.precioUnitario) || 0,
+            image: item.publicacion?.medios?.[0]?.url || "",
+            category: "product" as const,
+            seller: { name: item.publicacion?.autor?.nombre || "", faculty: "UCP", phone: item.publicacion?.autor?.telefono ?? undefined },
+            quantity: item.cantidad,
+          }))
+        );
+      })
+      .catch(() => {});
+  }, []);
 
   const addToCart = (item: CartItem) => {
     setItems((prevItems) => {

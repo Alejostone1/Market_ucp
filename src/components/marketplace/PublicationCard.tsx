@@ -68,11 +68,21 @@ export function PublicationCard({ product }: ProductCardProps) {
 
     setIsAddingToCart(true);
     try {
-      await addToCart({
+      const res = await fetch("/api/carrito", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ publicacionId: product.id, cantidad: 1 }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error || "Error al agregar al carrito");
+        return;
+      }
+      addToCart({
         id: product.id,
         title: product.titulo,
         price: product.precio || 0,
-        image: product.medios?.[0]?.url || "https://images.unsplash.com/photo-1560419015-7c427e8ae5ba?w=800",
+        image: product.medios?.[0]?.url || "",
         category: product.tipo === "SERVICIO" ? "service" : "product",
         seller: {
           name: product.autor?.nombre || "Vendedor",
@@ -81,8 +91,7 @@ export function PublicationCard({ product }: ProductCardProps) {
         },
         quantity: 1,
       });
-      toast.success("Producto agregado al carrito");
-    } catch (error) {
+    } catch {
       toast.error("Error al agregar al carrito");
     } finally {
       setIsAddingToCart(false);

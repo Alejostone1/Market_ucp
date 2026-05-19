@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -38,24 +37,21 @@ interface CarritoItem {
 }
 
 export default function CartPage() {
-  const { usuario } = useAuth();
   const [carritoItems, setCarritoItems] = useState<CarritoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCarrito();
-  }, [usuario?.id]);
+  }, []);
 
   const fetchCarrito = async () => {
-    if (!usuario?.id) return;
-
     try {
       setLoading(true);
-      const response = await fetch(`/api/usuarios/${usuario.id}/carrito`);
+      const response = await fetch('/api/carrito');
       if (response.ok) {
         const data = await response.json();
-        setCarritoItems(data);
+        setCarritoItems(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error('Error al cargar carrito:', error);
