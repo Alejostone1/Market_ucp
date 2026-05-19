@@ -64,7 +64,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
-      <div className="container mx-auto px-4 py-3">
+      <div className="container mx-auto px-4 py-2">
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
           <Link href={isAuthenticated ?
@@ -73,7 +73,7 @@ export function Header() {
             <img
               src="/logo_ucp.png"
               alt="UCP Logo"
-              className="w-24 h-24 object-contain"
+              className="h-10 w-auto object-contain"
             />
             <div className="hidden md:block">
               <h1 className="text-lg font-bold text-gray-900">UCP Marketplace</h1>
