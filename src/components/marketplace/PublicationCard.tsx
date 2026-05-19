@@ -60,7 +60,10 @@ export function PublicationCard({ product }: ProductCardProps) {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const { addToCart } = useCart();
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (product.tipo === "EVENTO" || product.tipo === "CONVOCATORIA") {
       toast.error("No puedes agregar eventos o convocatorias al carrito");
       return;
@@ -118,43 +121,34 @@ export function PublicationCard({ product }: ProductCardProps) {
 
   const getTipoBadgeColor = (tipo: string) => {
     switch (tipo) {
-      case "PRODUCTO":
-        return "bg-blue-600 text-white";
-      case "SERVICIO":
-        return "bg-green-600 text-white";
-      case "EVENTO":
-        return "bg-purple-600 text-white";
-      case "CONVOCATORIA":
-        return "bg-orange-600 text-white";
-      default:
-        return "bg-gray-600 text-white";
+      case "PRODUCTO": return "bg-blue-600 text-white";
+      case "SERVICIO": return "bg-green-600 text-white";
+      case "EVENTO": return "bg-purple-600 text-white";
+      case "CONVOCATORIA": return "bg-orange-600 text-white";
+      default: return "bg-gray-600 text-white";
     }
   };
 
   const getTipoLabel = (tipo: string) => {
     switch (tipo) {
-      case "PRODUCTO":
-        return "Producto";
-      case "SERVICIO":
-        return "Servicio";
-      case "EVENTO":
-        return "Evento";
-      case "CONVOCATORIA":
-        return "Convocatoria";
-      default:
-        return tipo;
+      case "PRODUCTO": return "Producto";
+      case "SERVICIO": return "Servicio";
+      case "EVENTO": return "Evento";
+      case "CONVOCATORIA": return "Convocatoria";
+      default: return tipo;
     }
   };
 
-  const mainImage = product.medios && product.medios.length > 0 ? product.medios[0].url : "https://images.unsplash.com/photo-1560419015-7c427e8ae5ba?w=800";
+  const mainImage = product.medios?.[0]?.url || "https://images.unsplash.com/photo-1560419015-7c427e8ae5ba?w=800";
   const sellerAvatar = product.autor?.avatarUrl || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200";
   const sellerName = product.autor?.nombre || "Usuario";
   const categoryName = product.categoria?.nombre || "General";
   const tipo = product.tipo || "PRODUCTO";
 
   return (
-    <Card className="group overflow-hidden hover:shadow-lg transition-shadow duration-300 rounded-xl border-gray-200">
-      <Link href={`/publication/${product.id}`}>
+    <Link href={`/publication/${product.id}`} className="block">
+      <Card className="group overflow-hidden hover:shadow-lg transition-shadow duration-300 rounded-xl border-gray-200 h-full cursor-pointer">
+        {/* Imagen */}
         <div className="relative aspect-square overflow-hidden bg-gray-100">
           <img
             src={mainImage}
@@ -164,118 +158,103 @@ export function PublicationCard({ product }: ProductCardProps) {
           <Badge className={`absolute top-3 left-3 ${getTipoBadgeColor(tipo)} rounded-full`}>
             {getTipoLabel(tipo)}
           </Badge>
-        </div>
-      </Link>
-
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <Link href={`/publication/${product.id}`} className="flex-1">
-            <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-ucp-rojo transition-colors">
-              {product.titulo || "Sin título"}
-            </h3>
-          </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="shrink-0 -mt-1 -mr-2"
-            onClick={() => setIsFavorite(!isFavorite)}
+          {/* Favorito — en la imagen para no estorbar el footer en móvil */}
+          <button
+            className="absolute top-2 right-2 w-9 h-9 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-full shadow-sm active:scale-95 transition-transform"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsFavorite(!isFavorite); }}
+            aria-label="Guardar en favoritos"
           >
-            <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-600 text-red-600' : 'text-gray-400'}`} />
-          </Button>
+            <Heart className={`w-4 h-4 ${isFavorite ? "fill-red-600 text-red-600" : "text-gray-500"}`} />
+          </button>
         </div>
 
-        <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-          {product.descripcion || "Sin descripción"}
-        </p>
+        <CardContent className="p-4">
+          <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-ucp-rojo transition-colors mb-1">
+            {product.titulo || "Sin título"}
+          </h3>
 
-        <div className="flex items-center gap-2 mb-3">
-          <img
-            src={sellerAvatar}
-            alt={sellerName}
-            className="w-8 h-8 rounded-full object-cover"
-          />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {sellerName}
-            </p>
+          <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+            {product.descripcion || "Sin descripción"}
+          </p>
+
+          <div className="flex items-center gap-2 mb-3">
+            <img
+              src={sellerAvatar}
+              alt={sellerName}
+              className="w-7 h-7 rounded-full object-cover shrink-0"
+            />
+            <p className="text-sm font-medium text-gray-900 truncate">{sellerName}</p>
           </div>
-        </div>
 
-        {/* Información específica según tipo */}
-        {tipo === "EVENTO" && product.fechaEvento && (
-          <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
-            <Calendar className="w-3 h-3" />
-            <span>{formatDate(product.fechaEvento)}</span>
-            {product.ubicacionEvento && (
-              <>
-                <MapPin className="w-3 h-3 ml-2" />
-                <span className="truncate">{product.ubicacionEvento}</span>
-              </>
+          {tipo === "EVENTO" && product.fechaEvento && (
+            <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+              <Calendar className="w-3 h-3 shrink-0" />
+              <span>{formatDate(product.fechaEvento)}</span>
+              {product.ubicacionEvento && (
+                <>
+                  <MapPin className="w-3 h-3 ml-1 shrink-0" />
+                  <span className="truncate">{product.ubicacionEvento}</span>
+                </>
+              )}
+            </div>
+          )}
+
+          {tipo === "EVENTO" && product.cupos && (
+            <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+              <Users className="w-3 h-3 shrink-0" />
+              <span>{product.cuposOcupados || 0}/{product.cupos} cupos</span>
+            </div>
+          )}
+
+          {tipo === "CONVOCATORIA" && product.fechaLimite && (
+            <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+              <Clock className="w-3 h-3 shrink-0" />
+              <span>Límite: {formatDate(product.fechaLimite)}</span>
+            </div>
+          )}
+
+          <Badge variant="outline" className="rounded-full text-xs mt-1">
+            {categoryName}
+          </Badge>
+        </CardContent>
+
+        <CardFooter className="p-4 pt-0 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-xl font-bold text-ucp-rojo truncate">
+              {formatPrice(product.precio)}
+            </p>
+            {product.tipoPrecio === "POR_HORA" && <p className="text-xs text-gray-500">por hora</p>}
+            {product.tipoPrecio === "NEGOCIABLE" && <p className="text-xs text-gray-500">negociable</p>}
+          </div>
+
+          {/* Botones de acción — detienen propagación para no navegar */}
+          <div
+            className="flex items-center gap-2 shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {product.autor?.id && (
+              <ContactButton
+                vendorId={product.autor.id}
+                vendorName={product.autor.nombre ?? "Usuario"}
+                label=""
+                showIcon={true}
+                size="icon"
+                className="shrink-0"
+              />
+            )}
+            {product.tipo !== "EVENTO" && product.tipo !== "CONVOCATORIA" && (
+              <Button
+                onClick={handleAddToCart}
+                disabled={isAddingToCart}
+                className="bg-ucp-rojo text-white hover:bg-red-700 rounded-full w-10 h-10 p-0 shrink-0"
+                aria-label="Agregar al carrito"
+              >
+                <ShoppingCart className="w-4 h-4" />
+              </Button>
             )}
           </div>
-        )}
-
-        {tipo === "EVENTO" && product.cupos && (
-          <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
-            <Users className="w-3 h-3" />
-            <span>{product.cuposOcupados || 0}/{product.cupos} cupos</span>
-          </div>
-        )}
-
-        {tipo === "CONVOCATORIA" && product.fechaLimite && (
-          <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
-            <Clock className="w-3 h-3" />
-            <span>Fecha límite: {formatDate(product.fechaLimite)}</span>
-          </div>
-        )}
-
-        <Badge variant="outline" className="rounded-full text-xs">
-          {categoryName}
-        </Badge>
-      </CardContent>
-
-      <CardFooter className="p-4 pt-0 flex items-center justify-between">
-        <div>
-          <p className="text-2xl font-bold text-ucp-rojo">
-            {formatPrice(product.precio)}
-          </p>
-          {product.tipoPrecio === "POR_HORA" && (
-            <p className="text-xs text-gray-500">por hora</p>
-          )}
-          {product.tipoPrecio === "FIJO" && (
-            <p className="text-xs text-gray-500">precio fijo</p>
-          )}
-          {product.tipoPrecio === "NEGOCIABLE" && (
-            <p className="text-xs text-gray-500">negociable</p>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <Link href={`/publication/${product.id}`} className="flex-1">
-            <Button variant="outline" className="w-full rounded-full border-ucp-rojo text-ucp-rojo hover:bg-red-50">
-              Ver más
-            </Button>
-          </Link>
-          {product.autor?.id && (
-            <ContactButton
-              vendorId={product.autor.id}
-              vendorName={product.autor.nombre ?? "Usuario"}
-              label=""
-              showIcon={true}
-              size="icon"
-              className="shrink-0"
-            />
-          )}
-          {product.tipo !== "EVENTO" && product.tipo !== "CONVOCATORIA" && (
-            <Button
-              onClick={handleAddToCart}
-              disabled={isAddingToCart}
-              className="bg-ucp-rojo text-white hover:bg-red-700 rounded-full px-4"
-            >
-              <ShoppingCart className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
-      </CardFooter>
-    </Card>
+        </CardFooter>
+      </Card>
+    </Link>
   );
 }
