@@ -6,7 +6,6 @@ import { MessageCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { AuthGateModal } from "./AuthGateModal";
 
 interface ContactButtonProps {
   vendorId: string;
@@ -29,7 +28,6 @@ export function ContactButton({
 }: ContactButtonProps) {
   const { usuario, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Don't show the button while auth is initializing
@@ -40,7 +38,7 @@ export function ContactButton({
 
   const handleClick = async () => {
     if (!isAuthenticated) {
-      setShowModal(true);
+      router.push("/login");
       return;
     }
 
@@ -84,7 +82,6 @@ export function ContactButton({
         {label}
       </Button>
 
-      <AuthGateModal open={showModal} onOpenChange={setShowModal} />
     </>
   );
 }
