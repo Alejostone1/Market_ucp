@@ -13,6 +13,7 @@ async function main() {
   await prisma.mensaje.deleteMany();
   await prisma.conversacion.deleteMany();
   await prisma.favorito.deleteMany();
+  await prisma.carritoItem.deleteMany();
   await prisma.etiquetaEnPublicacion.deleteMany();
   await prisma.medio.deleteMany();
   await prisma.publicacion.deleteMany();
