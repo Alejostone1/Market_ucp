@@ -60,6 +60,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Publicación no disponible' }, { status: 400 });
     }
 
+    // Prevent users from adding their own publications to the cart
+    if (publicacion.autorId === usuarioId) {
+      return NextResponse.json(
+        { error: 'No puedes agregar tus propias publicaciones al carrito' },
+        { status: 403 },
+      );
+    }
+
     const precioFinal = precioUnitario ?? publicacion.precio ?? 0;
 
     const existente = await prisma.carritoItem.findUnique({
