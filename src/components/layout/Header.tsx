@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescri
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMessages } from "@/contexts/MessageContext";
+import { useFavorites } from "@/contexts/FavoritesContext";
 
 export function Header() {
   const pathname = usePathname();
@@ -19,6 +20,7 @@ export function Header() {
   const { usuario, isAuthenticated, logout } = useAuth();
   const { totalItems } = useCart();
   const { unreadCount: messageCount } = useMessages();
+  const { favoritesCount } = useFavorites();
 
   const isActive = (path: string) => pathname === path;
 
@@ -126,6 +128,18 @@ export function Header() {
                   </>
                 )}
 
+                {/* Favoritos — visible para todos */}
+                <Link href="/favorites">
+                  <Button variant="ghost" size="icon" className="relative rounded-full">
+                    <Heart className="w-5 h-5" />
+                    {favoritesCount > 0 && (
+                      <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 bg-ucp-rojo text-white text-xs rounded-full">
+                        {favoritesCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+
                 <Link href={isAuthenticated ? "/dashboard/student/cart" : "/cart"}>
                   <Button variant="ghost" size="icon" className="relative rounded-full">
                     <ShoppingCart className="w-5 h-5" />
@@ -157,6 +171,16 @@ export function Header() {
               </>
             ) : (
               <>
+                <Link href="/favorites">
+                  <Button variant="ghost" size="icon" className="relative rounded-full">
+                    <Heart className="w-5 h-5" />
+                    {favoritesCount > 0 && (
+                      <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 bg-ucp-rojo text-white text-xs rounded-full">
+                        {favoritesCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
                 <Link href="/cart">
                   <Button variant="ghost" size="icon" className="relative rounded-full">
                     <ShoppingCart className="w-5 h-5" />
@@ -291,11 +315,14 @@ export function Header() {
                             )}
                           </Link>
                           <Link
-                            href="/dashboard/student/favorites"
+                            href="/favorites"
                             className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700 transition-colors"
                           >
                             <Heart className="w-5 h-5" />
                             <span>Favoritos</span>
+                            {favoritesCount > 0 && (
+                              <Badge className="ml-auto bg-ucp-rojo text-white">{favoritesCount}</Badge>
+                            )}
                           </Link>
                         </div>
                       </div>

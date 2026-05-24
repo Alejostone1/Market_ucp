@@ -1,14 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, MapPin, Calendar, Clock, Users, ShoppingCart } from "lucide-react";
+import { Heart, MapPin, Calendar, Clock, Users, ShoppingCart, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useState } from "react";
 import { useCart } from "@/contexts/CartContext";
+import { useFavorites } from "@/contexts/FavoritesContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { ContactButton } from "@/components/chat/ContactButton";
+import { ReportModal } from "@/components/marketplace/ReportModal";
 
 interface Publicacion {
   id: string;
@@ -56,9 +59,14 @@ interface ProductCardProps {
 }
 
 export function PublicationCard({ product }: ProductCardProps) {
-  const [isFavorite, setIsFavorite] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const { addToCart } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { usuario } = useAuth();
+
+  // No mostrar botón de reporte en publicaciones propias
+  const esPropio = usuario?.id === product.autor?.id;
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -146,6 +154,7 @@ export function PublicationCard({ product }: ProductCardProps) {
   const tipo = product.tipo || "PRODUCTO";
 
   return (
+    <>
     <Link href={`/publication/${product.id}`} className="block">
       <Card className="group overflow-hidden hover:shadow-lg transition-shadow duration-300 rounded-xl border-gray-200 h-full cursor-pointer">
         {/* Imagen */}
@@ -161,10 +170,10 @@ export function PublicationCard({ product }: ProductCardProps) {
           {/* Favorito — en la imagen para no estorbar el footer en móvil */}
           <button
             className="absolute top-2 right-2 w-9 h-9 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-full shadow-sm active:scale-95 transition-transform"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsFavorite(!isFavorite); }}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(product); }}
             aria-label="Guardar en favoritos"
           >
-            <Heart className={`w-4 h-4 ${isFavorite ? "fill-red-600 text-red-600" : "text-gray-500"}`} />
+            <Heart className={`w-4 h-4 ${isFavorite(product.id) ? "fill-red-600 text-red-600" : "text-gray-500"}`} />
           </button>
         </div>
 
@@ -232,6 +241,18 @@ export function PublicationCard({ product }: ProductCardProps) {
             className="flex items-center gap-2 shrink-0"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Reportar — solo si no es publicación propia */}
+            {!esPropio && (
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowReport(true); }}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-[#881a1d] hover:bg-red-50 transition-colors"
+                aria-label="Reportar publicación"
+                title="Reportar"
+              >
+                <Flag className="w-3.5 h-3.5" />
+              </button>
+            )}
+
             {product.autor?.id && (
               <ContactButton
                 vendorId={product.autor.id}
@@ -256,5 +277,20 @@ export function PublicationCard({ product }: ProductCardProps) {
         </CardFooter>
       </Card>
     </Link>
+
+    {/* Modal de reporte — fuera del Link para no interferir con navegación */}
+    {showReport && (
+      <ReportModal
+        publicacion={{
+          id: product.id,
+          titulo: product.titulo,
+          autorNombre: product.autor?.nombre ?? "Usuario",
+          imagen: product.medios?.[0]?.url,
+        }}
+        open={showReport}
+        onClose={() => setShowReport(false)}
+      />
+    )}
+    </>
   );
 }

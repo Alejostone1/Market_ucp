@@ -1,29 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Search, AlertTriangle, CheckCircle, XCircle, ExternalLink } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import {
+  AlertTriangle, CheckCircle2, XCircle, ExternalLink,
+  Clock, Flag, ShieldCheck, Trash2, Archive, AlertOctagon,
+  ChevronDown, Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import Link from "next/link";
+
+// ── Tipos ──────────────────────────────────────────────────────────────────
 
 interface Reporte {
   id: string;
@@ -31,302 +23,413 @@ interface Reporte {
   descripcion: string | null;
   estado: string;
   creadoEn: string;
-  reportante: {
-    id: string;
-    nombre: string;
-    correo: string;
-  };
+  reportante: { id: string; nombre: string; correo: string };
   publicacion: {
     id: string;
     titulo: string;
     estado: string;
-    autor: {
-      id: string;
-      nombre: string;
-    };
+    tipo: string;
+    medios: { url: string }[];
+    autor: { id: string; nombre: string; correo: string };
   };
 }
 
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+const MOTIVO_LABELS: Record<string, string> = {
+  SPAM: "Spam",
+  CONTENIDO_INAPROPIADO: "Contenido inapropiado",
+  INFORMACION_FALSA: "Información falsa / Fraude",
+  DUPLICADO: "Publicación duplicada",
+  OTRO: "Otro motivo",
+};
+
+const ESTADO_TABS = [
+  { value: "PENDIENTE", label: "Pendientes" },
+  { value: "REVISADO", label: "Revisados" },
+  { value: "DESCARTADO", label: "Descartados" },
+  { value: "todos", label: "Todos" },
+];
+
+function EstadoBadge({ estado }: { estado: string }) {
+  if (estado === "REVISADO")
+    return <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">Revisado</Badge>;
+  if (estado === "DESCARTADO")
+    return <Badge className="bg-gray-100 text-gray-600 border-gray-200 text-xs">Descartado</Badge>;
+  return <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs">Pendiente</Badge>;
+}
+
+function PubEstadoBadge({ estado }: { estado: string }) {
+  const map: Record<string, string> = {
+    APROBADA: "bg-green-100 text-green-700",
+    PENDIENTE: "bg-yellow-100 text-yellow-700",
+    RECHAZADA: "bg-red-100 text-red-700",
+    ARCHIVADA: "bg-gray-100 text-gray-600",
+  };
+  return (
+    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${map[estado] || "bg-gray-100 text-gray-500"}`}>
+      {estado}
+    </span>
+  );
+}
+
+// ── Componente principal ───────────────────────────────────────────────────
+
 export default function AdminReportesPage() {
   const [reportes, setReportes] = useState<Reporte[]>([]);
-  const [selectedReporte, setSelectedReporte] = useState<Reporte | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [nota, setNota] = useState("");
-  const [eliminarPublicacion, setEliminarPublicacion] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const [filterEstado, setFilterEstado] = useState("PENDIENTE");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchReportes = async () => {
-      try {
-        const params = new URLSearchParams({
-          ...(filterEstado !== "todos" && { estado: filterEstado }),
-        });
+  // Dialog de resolución
+  const [selected, setSelected] = useState<Reporte | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [nota, setNota] = useState("");
+  const [accion, setAccion] = useState<"ninguna" | "archivar" | "rechazar" | "eliminar">("ninguna");
+  const [resolving, setResolving] = useState(false);
 
-        const response = await fetch(`/api/admin/reportes?${params}`);
-        if (response.ok) {
-          const data = await response.json();
-          setReportes(data.reportes);
-        }
-      } catch (error) {
-        console.error('Error al cargar reportes:', error);
-      } finally {
-        setLoading(false);
+  const fetchReportes = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = filterEstado !== "todos" ? `?estado=${filterEstado}` : "";
+      const res = await fetch(`/api/admin/reportes${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setReportes(data.reportes ?? []);
+        setPendingCount(data.pendingCount ?? 0);
       }
-    };
-
-    fetchReportes();
+    } catch {
+      toast.error("Error al cargar reportes");
+    } finally {
+      setLoading(false);
+    }
   }, [filterEstado]);
 
-  const handleResolve = async (estado: "REVISADO" | "DESCARTADO") => {
-    if (!selectedReporte) return;
+  useEffect(() => { fetchReportes(); }, [fetchReportes]);
 
+  const openDialog = (reporte: Reporte) => {
+    setSelected(reporte);
+    setNota("");
+    setAccion("ninguna");
+    setDialogOpen(true);
+  };
+
+  const handleResolve = async (estado: "REVISADO" | "DESCARTADO") => {
+    if (!selected) return;
+    setResolving(true);
     try {
-      const response = await fetch('/api/admin/reportes', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/admin/reportes", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: selectedReporte.id,
+          id: selected.id,
           estado,
           nota,
-          eliminarPublicacion,
+          accionPublicacion: estado === "DESCARTADO" ? "ninguna" : accion,
         }),
       });
 
-      if (response.ok) {
-        setReportes(reportes.filter(r => r.id !== selectedReporte.id));
-        setIsDialogOpen(false);
-        setNota("");
-        setEliminarPublicacion(false);
-        setSelectedReporte(null);
-        toast.success(`Reporte ${estado === 'REVISADO' ? 'revisado' : 'descartado'} exitosamente`);
-      } else {
-        toast.error("Error al actualizar reporte");
-      }
-    } catch (error) {
-      toast.error("Error al actualizar reporte");
+      if (!res.ok) { toast.error("Error al resolver el reporte"); return; }
+
+      toast.success(
+        estado === "REVISADO"
+          ? "Reporte resuelto y acciones aplicadas"
+          : "Reporte descartado correctamente"
+      );
+      setReportes((prev) => prev.filter((r) => r.id !== selected.id));
+      setDialogOpen(false);
+    } catch {
+      toast.error("Error de conexión");
+    } finally {
+      setResolving(false);
     }
   };
 
-  const getEstadoBadge = (estado: string) => {
-    switch (estado) {
-      case "REVISADO":
-        return <Badge className="bg-ucp-verde text-white">Revisado</Badge>;
-      case "DESCARTADO":
-        return <Badge className="bg-gray-500 text-white">Descartado</Badge>;
-      default:
-        return <Badge className="bg-yellow-500 text-white">Pendiente</Badge>;
-    }
-  };
-
-  const getMotivoLabel = (motivo: string) => {
-    switch (motivo) {
-      case "SPAM":
-        return "Spam";
-      case "CONTENIDO_INAPROPIADO":
-        return "Contenido Inapropiado";
-      case "INFORMACION_FALSA":
-        return "Información Falsa";
-      case "DUPLICADO":
-        return "Duplicado";
-      default:
-        return "Otro";
-    }
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `hace ${mins} min`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `hace ${hrs} h`;
+    const days = Math.floor(hrs / 24);
+    return `hace ${days} día${days !== 1 ? "s" : ""}`;
   };
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestión de Reportes</h1>
-      <p className="text-gray-600 mb-8">
-        Revisa y resuelve los reportes de contenido
-      </p>
-
-      {/* Filters */}
-      <Card className="border-0 shadow-lg rounded-xl mb-6">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                type="search"
-                placeholder="Buscar por motivo o reportante..."
-                className="pl-10 rounded-full"
-                disabled
-              />
-            </div>
-
-            <Select value={filterEstado} onValueChange={setFilterEstado}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="PENDIENTE">Pendientes</SelectItem>
-                <SelectItem value="REVISADO">Revisados</SelectItem>
-                <SelectItem value="DESCARTADO">Descartados</SelectItem>
-                <SelectItem value="todos">Todos</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Reports List */}
-      {loading ? (
-        <div className="text-center py-16">
-          <p className="text-gray-500">Cargando reportes...</p>
+      {/* Cabecera */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-black text-gray-900">Gestión de Reportes</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Revisa, valida y toma acciones sobre las publicaciones reportadas por la comunidad.
+          </p>
         </div>
-      ) : reportes.length > 0 ? (
-        <div className="space-y-4">
-          {reportes.map((reporte) => (
-            <Card key={reporte.id} className="border-0 shadow-lg rounded-xl hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row gap-6">
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-lg text-gray-900">
-                            {getMotivoLabel(reporte.motivo)}
-                          </h3>
-                          {getEstadoBadge(reporte.estado)}
-                        </div>
-                        
-                        <p className="text-gray-600 text-sm mb-3">
-                          {reporte.descripcion || "Sin descripción"}
-                        </p>
-                        
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-3">
-                          <span>•</span>
-                          <span>Reportante: {reporte.reportante.nombre}</span>
-                          <span>•</span>
-                          <span>{reporte.reportante.correo}</span>
-                          <span>•</span>
-                          <span>{new Date(reporte.creadoEn).toLocaleDateString()}</span>
+        {pendingCount > 0 && (
+          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <span className="text-sm font-bold text-amber-700">
+              {pendingCount} pendiente{pendingCount !== 1 ? "s" : ""}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Tabs de estado */}
+      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit">
+        {ESTADO_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setFilterEstado(tab.value)}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              filterEstado === tab.value
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            {tab.label}
+            {tab.value === "PENDIENTE" && pendingCount > 0 && (
+              <span className="ml-1.5 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                {pendingCount}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Contenido */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-3">
+          <Loader2 className="w-8 h-8 text-[#881a1d] animate-spin" />
+          <p className="text-gray-400 text-sm">Cargando reportes…</p>
+        </div>
+      ) : reportes.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+            <ShieldCheck className="w-10 h-10 text-gray-300" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-700 mb-1">Sin reportes</h3>
+          <p className="text-gray-400 text-sm">No hay reportes {filterEstado !== "todos" ? `en estado ${filterEstado.toLowerCase()}` : ""}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {reportes.map((reporte) => {
+            const thumb = reporte.publicacion.medios?.[0]?.url;
+            return (
+              <div
+                key={reporte.id}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+              >
+                <div className="flex gap-0">
+                  {/* Thumbnail de la publicación */}
+                  <div className="w-28 h-28 shrink-0 bg-gray-100">
+                    {thumb ? (
+                      <img src={thumb} alt={reporte.publicacion.titulo} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300">
+                        <Flag className="w-6 h-6" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Contenido */}
+                  <div className="flex-1 p-4 min-w-0">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="min-w-0">
+                        {/* Motivo + estado */}
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="text-sm font-bold text-gray-900">
+                            {MOTIVO_LABELS[reporte.motivo] ?? reporte.motivo}
+                          </span>
+                          <EstadoBadge estado={reporte.estado} />
                         </div>
 
-                        <div className="bg-gray-50 rounded-lg p-4 mb-3">
-                          <p className="text-sm font-medium text-gray-700 mb-1">Publicación reportada:</p>
-                          <p className="text-sm text-gray-900">{reporte.publicacion.titulo}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Autor: {reporte.publicacion.autor.nombre} • Estado: {reporte.publicacion.estado}
-                          </p>
-                        </div>
+                        {/* Publicación */}
+                        <p className="text-sm text-gray-600 truncate font-medium">
+                          {reporte.publicacion.titulo}{" "}
+                          <PubEstadoBadge estado={reporte.publicacion.estado} />
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          Autor: {reporte.publicacion.autor.nombre}
+                        </p>
                       </div>
 
-                      <div className="flex gap-2">
+                      {/* Acciones rápidas */}
+                      <div className="flex items-center gap-2 shrink-0">
                         <Link href={`/publication/${reporte.publicacion.id}`} target="_blank">
-                          <Button variant="outline" size="sm">
-                            <ExternalLink className="w-4 h-4 mr-2" />
-                            Ver Publicación
+                          <Button variant="outline" size="sm" className="rounded-lg h-8 text-xs gap-1">
+                            <ExternalLink className="w-3 h-3" />
+                            Ver
                           </Button>
                         </Link>
                         {reporte.estado === "PENDIENTE" && (
                           <Button
-                            onClick={() => {
-                              setSelectedReporte(reporte);
-                              setIsDialogOpen(true);
-                            }}
-                            className="bg-ucp-rojo hover:bg-red-700 rounded-full"
                             size="sm"
+                            onClick={() => openDialog(reporte)}
+                            className="bg-[#881a1d] hover:bg-[#6d1416] text-white rounded-lg h-8 text-xs gap-1"
                           >
-                            <AlertTriangle className="w-4 h-4 mr-2" />
-                            Revisar
+                            <AlertOctagon className="w-3 h-3" />
+                            Resolver
                           </Button>
                         )}
                       </div>
                     </div>
+
+                    {/* Descripción del reporte */}
+                    {reporte.descripcion && (
+                      <p className="text-xs text-gray-500 italic bg-gray-50 rounded-lg px-3 py-2 mb-2 line-clamp-2">
+                        "{reporte.descripcion}"
+                      </p>
+                    )}
+
+                    {/* Meta */}
+                    <div className="flex items-center gap-3 text-xs text-gray-400">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {timeAgo(reporte.creadoEn)}
+                      </span>
+                      <span>·</span>
+                      <span>Reportado por {reporte.reportante.nombre}</span>
+                      <span className="hidden sm:inline">·</span>
+                      <span className="hidden sm:inline text-gray-300">{reporte.reportante.correo}</span>
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            );
+          })}
         </div>
-      ) : (
-        <Card className="border-0 shadow-lg rounded-xl">
-          <CardContent className="p-16 text-center">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-12 h-12 text-gray-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              No hay reportes
-            </h3>
-            <p className="text-gray-600">
-              No se encontraron reportes con los filtros actuales
-            </p>
-          </CardContent>
-        </Card>
       )}
 
-      {/* Review Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Revisar Reporte</DialogTitle>
-            <DialogDescription>
-              Resuelve este reporte y toma las acciones necesarias
+      {/* ── Dialog de resolución ── */}
+      <Dialog open={dialogOpen} onOpenChange={(v) => !v && setDialogOpen(false)}>
+        <DialogContent className="max-w-lg rounded-2xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-0">
+            <DialogTitle className="flex items-center gap-2 text-lg font-bold">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              Resolver reporte
+            </DialogTitle>
+            <DialogDescription className="text-sm text-gray-500 mt-1">
+              Elige qué acción tomar sobre esta publicación reportada.
             </DialogDescription>
           </DialogHeader>
 
-          {selectedReporte && (
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm font-medium text-gray-700 mb-1">Reporte:</p>
-                <p className="text-sm text-gray-900">{getMotivoLabel(selectedReporte.motivo)}</p>
-                {selectedReporte.descripcion && (
-                  <p className="text-sm text-gray-600 mt-2">{selectedReporte.descripcion}</p>
+          {selected && (
+            <div className="px-6 pb-6 pt-4 space-y-5">
+              {/* Resumen del reporte */}
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                <div className="flex items-center gap-3">
+                  {selected.publicacion.medios?.[0]?.url ? (
+                    <img
+                      src={selected.publicacion.medios[0].url}
+                      className="w-12 h-12 rounded-lg object-cover shrink-0"
+                      alt=""
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-gray-200 shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {selected.publicacion.titulo}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {MOTIVO_LABELS[selected.motivo]} · por {selected.reportante.nombre}
+                    </p>
+                  </div>
+                </div>
+                {selected.descripcion && (
+                  <p className="text-xs text-gray-600 italic border-t pt-2">
+                    "{selected.descripcion}"
+                  </p>
                 )}
               </div>
 
+              {/* Acción sobre la publicación */}
               <div>
-                <label className="text-sm font-medium mb-2 block">Nota de resolución</label>
+                <p className="text-sm font-semibold text-gray-800 mb-2">
+                  Acción sobre la publicación
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: "ninguna", label: "Sin cambios", icon: <ShieldCheck className="w-4 h-4" />, desc: "Solo resolver el reporte" },
+                    { value: "archivar", label: "Archivar", icon: <Archive className="w-4 h-4" />, desc: "Ocultar sin eliminar" },
+                    { value: "rechazar", label: "Rechazar", icon: <XCircle className="w-4 h-4" />, desc: "Marcar como rechazada" },
+                    { value: "eliminar", label: "Eliminar", icon: <Trash2 className="w-4 h-4" />, desc: "Borrar permanentemente" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setAccion(opt.value as typeof accion)}
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${
+                        accion === opt.value
+                          ? opt.value === "eliminar"
+                            ? "border-red-500 bg-red-50"
+                            : "border-[#881a1d] bg-[#881a1d]/5"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className={`flex items-center gap-1.5 mb-0.5 font-semibold text-sm ${
+                        accion === opt.value
+                          ? opt.value === "eliminar" ? "text-red-600" : "text-[#881a1d]"
+                          : "text-gray-700"
+                      }`}>
+                        {opt.icon}
+                        {opt.label}
+                      </div>
+                      <p className="text-xs text-gray-500">{opt.desc}</p>
+                    </button>
+                  ))}
+                </div>
+
+                {accion === "eliminar" && (
+                  <p className="text-xs text-red-600 mt-2 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" />
+                    Esta acción es irreversible.
+                  </p>
+                )}
+              </div>
+
+              {/* Nota del admin */}
+              <div>
+                <label className="text-sm font-semibold text-gray-800 mb-1.5 block">
+                  Nota interna{" "}
+                  <span className="text-gray-400 font-normal">(opcional)</span>
+                </label>
                 <Textarea
-                  placeholder="Describe tu resolución..."
+                  placeholder="Razón de la decisión, observaciones internas…"
                   value={nota}
                   onChange={(e) => setNota(e.target.value)}
                   rows={3}
+                  className="rounded-xl resize-none text-sm"
                 />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="eliminar"
-                  checked={eliminarPublicacion}
-                  onChange={(e) => setEliminarPublicacion(e.target.checked)}
-                  className="w-4 h-4"
-                />
-                <label htmlFor="eliminar" className="text-sm text-gray-700">
-                  Eliminar publicación reportada
-                </label>
               </div>
             </div>
           )}
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="px-6 pb-6 gap-2 flex-col sm:flex-row">
             <Button
               variant="outline"
-              onClick={() => {
-                setIsDialogOpen(false);
-                setNota("");
-                setEliminarPublicacion(false);
-                setSelectedReporte(null);
-              }}
+              className="rounded-xl flex-1"
+              disabled={resolving}
+              onClick={() => setDialogOpen(false)}
             >
               Cancelar
             </Button>
             <Button
-              onClick={() => handleResolve("DESCARTADO")}
               variant="outline"
+              className="rounded-xl flex-1 text-gray-600 border-gray-300 hover:bg-gray-50"
+              disabled={resolving}
+              onClick={() => handleResolve("DESCARTADO")}
             >
-              <XCircle className="w-4 h-4 mr-2" />
-              Descartar
+              {resolving ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4 mr-1" />}
+              Descartar reporte
             </Button>
             <Button
+              className="rounded-xl flex-1 bg-[#881a1d] hover:bg-[#6d1416] text-white"
+              disabled={resolving}
               onClick={() => handleResolve("REVISADO")}
-              className="bg-ucp-verde hover:bg-green-700"
             >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Revisar
+              {resolving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
+              Confirmar acción
             </Button>
           </DialogFooter>
         </DialogContent>

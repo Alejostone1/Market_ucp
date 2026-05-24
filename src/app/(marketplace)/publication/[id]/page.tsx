@@ -3,14 +3,17 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Heart, Share2, ShoppingCart, MapPin, Calendar, Shield, ArrowLeft } from "lucide-react";
+import { Heart, Share2, ShoppingCart, MapPin, Calendar, Shield, ArrowLeft, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { PublicationCard } from "@/components/marketplace/PublicationCard";
+import { ReportModal } from "@/components/marketplace/ReportModal";
 import { useCart } from "@/contexts/CartContext";
+import { useFavorites } from "@/contexts/FavoritesContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { ContactButton } from "@/components/chat/ContactButton";
 
 interface Publicacion {
@@ -60,8 +63,10 @@ export default function PublicationDetailPage() {
   const [product, setProduct] = useState<Publicacion | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const { addToCart } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { usuario } = useAuth();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -183,17 +188,31 @@ export default function PublicationDetailPage() {
                     </Badge>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="rounded-full w-9 h-9"
-                      onClick={() => setIsFavorite(!isFavorite)}
-                    >
-                      <Heart className={`w-4 h-4 ${isFavorite ? 'fill-ucp-rojo text-ucp-rojo' : ''}`} />
-                    </Button>
+                    {product && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="rounded-full w-9 h-9"
+                        onClick={() => toggleFavorite(product)}
+                      >
+                        <Heart className={`w-4 h-4 ${isFavorite(product.id) ? 'fill-ucp-rojo text-ucp-rojo' : ''}`} />
+                      </Button>
+                    )}
                     <Button variant="outline" size="icon" className="rounded-full w-9 h-9">
                       <Share2 className="w-4 h-4" />
                     </Button>
+                    {/* Reportar — solo si no es publicación propia */}
+                    {product && usuario?.id !== product.autor.id && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="rounded-full w-9 h-9 text-gray-400 hover:text-[#881a1d] hover:border-[#881a1d]"
+                        onClick={() => setShowReport(true)}
+                        title="Reportar publicación"
+                      >
+                        <Flag className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
 
@@ -326,6 +345,20 @@ export default function PublicationDetailPage() {
           </section>
         )}
       </div>
+
+      {/* Modal de reporte */}
+      {product && showReport && (
+        <ReportModal
+          publicacion={{
+            id: product.id,
+            titulo: product.titulo,
+            autorNombre: product.autor.nombre,
+            imagen: product.medios?.[0]?.url,
+          }}
+          open={showReport}
+          onClose={() => setShowReport(false)}
+        />
+      )}
     </div>
   );
 }

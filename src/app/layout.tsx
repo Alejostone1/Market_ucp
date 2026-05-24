@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { MessageProvider } from "@/contexts/MessageContext";
+import { FavoritesProvider } from "@/contexts/FavoritesContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,13 +25,15 @@ export default function RootLayout({
       <body className={inter.className} suppressHydrationWarning>
         <AuthProvider>
           <CartProvider>
-            <MessageProvider>
-              <div className="min-h-screen bg-gray-50">
-                <Header />
-                <main>{children}</main>
-                <Footer />
-              </div>
-            </MessageProvider>
+            <FavoritesProvider>
+              <MessageProvider>
+                <div className="min-h-screen bg-gray-50">
+                  <Header />
+                  <main>{children}</main>
+                  <Footer />
+                </div>
+              </MessageProvider>
+            </FavoritesProvider>
           </CartProvider>
         </AuthProvider>
       </body>
