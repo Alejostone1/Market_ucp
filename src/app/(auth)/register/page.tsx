@@ -22,13 +22,15 @@ export default function RegisterPage() {
 
   const emailTyped = email.includes("@");
   const ucpEmail = isUcpEmail(email);
-  const showAlidoWarning = rol === "ALIADO" && emailTyped && !ucpEmail;
+  // Ambos roles requieren correo @ucp.edu.co
+  const showEmailWarning = emailTyped && !ucpEmail;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (showAlidoWarning) {
-      toast.error("Los aliados deben registrarse con correo @ucp.edu.co");
+    // Validar dominio UCP para AMBOS roles
+    if (!isUcpEmail(email)) {
+      toast.error("Solo se permiten correos institucionales @ucp.edu.co");
       return;
     }
 
@@ -292,9 +294,9 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Alerta aliado sin correo UCP */}
+            {/* Alerta correo no UCP (aplica para ambos roles) */}
             <AnimatePresence>
-              {showAlidoWarning && (
+              {showEmailWarning && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
@@ -302,22 +304,22 @@ export default function RegisterPage() {
                   transition={{ duration: 0.25 }}
                   className="overflow-hidden"
                 >
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                     <div className="flex items-start gap-2.5">
-                      <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <Info className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-amber-800 font-semibold text-sm mb-1">
-                          ¿Aliado externo sin correo UCP?
+                        <p className="text-red-800 font-semibold text-sm mb-1">
+                          Correo institucional requerido
                         </p>
-                        <p className="text-amber-700 text-xs leading-relaxed">
-                          Los aliados deben tener correo <strong>@ucp.edu.co</strong>. Si eres una empresa o profesional externo, solicita acceso escribiendo a{" "}
+                        <p className="text-red-700 text-xs leading-relaxed">
+                          Solo se permiten correos <strong>@ucp.edu.co</strong>. Si no tienes correo institucional, escribe a{" "}
                           <a
-                            href="mailto:admin@ucp.edu.co?subject=Solicitud%20de%20Aliado"
+                            href="mailto:admin@ucp.edu.co?subject=Solicitud%20de%20Acceso"
                             className="font-semibold underline"
                           >
                             admin@ucp.edu.co
-                          </a>{" "}
-                          con el asunto <em>"Solicitud de Aliado"</em>.
+                          </a>
+                          .
                         </p>
                       </div>
                     </div>
@@ -372,7 +374,7 @@ export default function RegisterPage() {
             {/* Botón */}
             <motion.button
               type="submit"
-              disabled={isLoading || showAlidoWarning}
+              disabled={isLoading || showEmailWarning}
               whileTap={{ scale: 0.98 }}
               className="w-full bg-[#881a1d] hover:bg-[#6d1416] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-[#881a1d]/20 mt-2 cursor-pointer"
             >

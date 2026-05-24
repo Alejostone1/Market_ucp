@@ -26,6 +26,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Rol inválido" }, { status: 400 });
     }
 
+    // Validar dominio de correo institucional UCP
+    if (!correo.toLowerCase().trim().endsWith("@ucp.edu.co")) {
+      return NextResponse.json(
+        { message: "Solo se permiten correos institucionales @ucp.edu.co" },
+        { status: 400 }
+      );
+    }
+
     const existe = await prisma.usuario.findUnique({ where: { correo } });
     if (existe) {
       return NextResponse.json(
