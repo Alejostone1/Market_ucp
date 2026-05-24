@@ -137,42 +137,53 @@
 
 ```mermaid
 graph TB
-    subgraph Cliente["🖥️ Cliente (Browser)"]
-        UI[React 18 + App Router]
-        FM[Framer Motion]
-        CTX[Contexts: Auth · Cart · Favorites · Messages]
-        SK[Socket.IO Client]
+    subgraph BR["🖥️ Browser"]
+        UI["React 18 + App Router"]
+        CTX["Auth · Cart · Favorites · Messages"]
+        SOCK["Socket.IO Client"]
     end
 
-    subgraph Servidor["⚙️ Servidor Custom Node.js (server.js)"]
-        NX[Next.js Handler]
-        SIO[Socket.IO Server]
-        MAP[Map: onlineUsers]
+    subgraph SRV["⚙️ server.js — Node.js"]
+        NX["Next.js Handler"]
+        SIO["Socket.IO Server"]
+        MAP[("onlineUsers Map")]
     end
 
-    subgraph API["🔌 API Routes (Next.js)"]
-        AUTH[/api/auth/login · register · logout]
-        PUBS[/api/publicaciones]
-        FAV[/api/favoritos]
-        CART[/api/carrito]
-        CONV[/api/conversaciones]
-        ADMIN[/api/admin/*]
-        UPLOAD[/api/upload]
+    subgraph RT["🔌 API Routes"]
+        R1["/api/auth"]
+        R2["/api/publicaciones"]
+        R3["/api/favoritos"]
+        R4["/api/carrito"]
+        R5["/api/conversaciones"]
+        R6["/api/admin"]
     end
 
-    subgraph DB["🗄️ Neon PostgreSQL + Prisma"]
-        PRISMA[Prisma Client]
-        PG[(PostgreSQL)]
+    subgraph DAT["🗄️ Neon PostgreSQL"]
+        ORM["Prisma Client"]
+        PG[("PostgreSQL")]
     end
 
-    UI -->|HTTP Fetch| API
-    UI -->|WebSocket| SIO
-    SK <-->|WS Rooms & Events| SIO
-    NX --> API
-    API --> PRISMA
-    PRISMA --> PG
+    UI -->|"HTTP Fetch"| NX
+    SOCK -->|"WebSocket"| SIO
+    SIO -->|"Eventos RT"| SOCK
+
+    NX --> R1
+    NX --> R2
+    NX --> R3
+    NX --> R4
+    NX --> R5
+    NX --> R6
+
+    R1 --> ORM
+    R2 --> ORM
+    R3 --> ORM
+    R4 --> ORM
+    R5 --> ORM
+    R6 --> ORM
+
+    ORM --> PG
     SIO --> MAP
-    SIO -.->|global.io emit| API
+    SIO -.->|"global.io.emit"| R5
 ```
 
 ### Patrón de servidor híbrido
