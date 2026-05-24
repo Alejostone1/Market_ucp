@@ -68,6 +68,7 @@ export default function AdminPublicacionesPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [isStateDialogOpen, setIsStateDialogOpen] = useState(false);
   const [newEstado, setNewEstado] = useState("");
+  const [stateNotaRechazo, setStateNotaRechazo] = useState("");
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTipo, setFilterTipo] = useState("todos");
@@ -228,12 +229,19 @@ export default function AdminPublicacionesPage() {
   const openStateDialog = (publicacion: Publicacion) => {
     setSelectedPublicacion(publicacion);
     setNewEstado(publicacion.estado);
+    setStateNotaRechazo("");
     setIsStateDialogOpen(true);
   };
 
   const handleStateChange = async () => {
     if (!selectedPublicacion || !newEstado) {
       toast.error("Debes seleccionar un estado");
+      return;
+    }
+
+    // Si el nuevo estado es RECHAZADA, la nota es OBLIGATORIA
+    if (newEstado === 'RECHAZADA' && !stateNotaRechazo.trim()) {
+      toast.error("Debes ingresar una nota justificativa para rechazar la publicación");
       return;
     }
 
@@ -245,17 +253,18 @@ export default function AdminPublicacionesPage() {
           id: selectedPublicacion.id,
           estado: newEstado,
           adminId: usuario?.id,
-          ...(newEstado === 'RECHAZADA' && { notaRechazo: 'Cambio de estado por administrador' }),
+          ...(stateNotaRechazo.trim() && { notaRechazo: stateNotaRechazo.trim() }),
         }),
       });
 
       if (response.ok) {
-        setPublicaciones(publicaciones.map(p => 
+        setPublicaciones(publicaciones.map(p =>
           p.id === selectedPublicacion.id ? { ...p, estado: newEstado } : p
         ));
         setIsStateDialogOpen(false);
         setSelectedPublicacion(null);
         setNewEstado("");
+        setStateNotaRechazo("");
         toast.success(`Estado cambiado a ${newEstado}`);
       } else {
         toast.error("Error al cambiar estado");
@@ -815,15 +824,28 @@ export default function AdminPublicacionesPage() {
       </Dialog>
 
       {/* State Change Dialog */}
-      <Dialog open={isStateDialogOpen} onOpenChange={setIsStateDialogOpen}>
+      <Dialog open={isStateDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsStateDialogOpen(false);
+          setSelectedPublicacion(null);
+          setNewEstado("");
+          setStateNotaRechazo("");
+        }
+      }}>
         <DialogContent className="bg-white max-w-md">
           <DialogHeader>
-            <DialogTitle>Cambiar Estado</DialogTitle>
+            <DialogTitle>Cambiar Estado de Publicación</DialogTitle>
+            <DialogDescription>
+              {selectedPublicacion?.titulo}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Seleccionar nuevo estado</label>
-              <Select value={newEstado} onValueChange={setNewEstado}>
+              <label className="text-sm font-medium mb-2 block">Nuevo estado</label>
+              <Select value={newEstado} onValueChange={(v) => {
+                setNewEstado(v);
+                if (v !== 'RECHAZADA') setStateNotaRechazo("");
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
@@ -835,6 +857,42 @@ export default function AdminPublicacionesPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Nota — OBLIGATORIA si se rechaza, opcional en otros casos */}
+            {newEstado === 'RECHAZADA' && (
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Nota de rechazo <span className="text-red-500">*</span>
+                </label>
+                <Textarea
+                  placeholder="Explica el motivo del rechazo para que el autor pueda corregirlo..."
+                  value={stateNotaRechazo}
+                  onChange={(e) => setStateNotaRechazo(e.target.value)}
+                  rows={4}
+                  className={!stateNotaRechazo.trim() ? "border-red-300" : ""}
+                />
+                {!stateNotaRechazo.trim() && (
+                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                    <X className="w-3 h-3" />
+                    La nota de rechazo es obligatoria
+                  </p>
+                )}
+              </div>
+            )}
+
+            {newEstado && newEstado !== 'RECHAZADA' && (
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Nota (opcional)
+                </label>
+                <Textarea
+                  placeholder="Añade una nota informativa sobre este cambio de estado..."
+                  value={stateNotaRechazo}
+                  onChange={(e) => setStateNotaRechazo(e.target.value)}
+                  rows={3}
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button
@@ -843,15 +901,20 @@ export default function AdminPublicacionesPage() {
                 setIsStateDialogOpen(false);
                 setSelectedPublicacion(null);
                 setNewEstado("");
+                setStateNotaRechazo("");
               }}
             >
               Cancelar
             </Button>
             <Button
               onClick={handleStateChange}
-              disabled={!newEstado || newEstado === selectedPublicacion?.estado}
+              disabled={
+                !newEstado ||
+                newEstado === selectedPublicacion?.estado ||
+                (newEstado === 'RECHAZADA' && !stateNotaRechazo.trim())
+              }
             >
-              Cambiar Estado
+              Confirmar cambio
             </Button>
           </DialogFooter>
         </DialogContent>
