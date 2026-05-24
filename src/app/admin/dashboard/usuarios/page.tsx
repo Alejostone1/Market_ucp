@@ -67,7 +67,6 @@ interface FormState {
   semestre: string;
   telefono: string;
   verificado: boolean;
-  bloqueado: boolean;
 }
 
 const EMPTY_FORM: FormState = {
@@ -79,7 +78,6 @@ const EMPTY_FORM: FormState = {
   semestre: "",
   telefono: "",
   verificado: false,
-  bloqueado: false,
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -260,9 +258,10 @@ interface UsuarioModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: (u: UsuarioItem) => void;
+  onBloquear?: (u: UsuarioItem) => void;
 }
 
-function UsuarioModal({ mode, usuario, open, onClose, onSuccess }: UsuarioModalProps) {
+function UsuarioModal({ mode, usuario, open, onClose, onSuccess, onBloquear }: UsuarioModalProps) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -278,7 +277,6 @@ function UsuarioModal({ mode, usuario, open, onClose, onSuccess }: UsuarioModalP
         semestre: usuario.semestre?.toString() ?? "",
         telefono: usuario.telefono ?? "",
         verificado: usuario.verificado,
-        bloqueado: usuario.bloqueado,
       });
     } else {
       setForm(EMPTY_FORM);
@@ -322,8 +320,8 @@ function UsuarioModal({ mode, usuario, open, onClose, onSuccess }: UsuarioModalP
       if (mode === "create") {
         payload.contrasena = form.contrasena;
       } else {
+        // El bloqueo se gestiona exclusivamente desde el BloqueoDialog (con motivo)
         payload.id = usuario!.id;
-        payload.bloqueado = form.bloqueado;
       }
 
       const method = mode === "create" ? "POST" : "PATCH";
@@ -488,7 +486,7 @@ function UsuarioModal({ mode, usuario, open, onClose, onSuccess }: UsuarioModalP
           </div>
 
           {/* Switches */}
-          <div className={`grid gap-3 pt-1 ${mode === "edit" ? "grid-cols-2" : "grid-cols-1"}`}>
+          <div className="grid gap-3 pt-1 grid-cols-1">
             <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
               <div>
                 <p className="text-sm font-medium text-gray-800">Verificado</p>
@@ -499,20 +497,48 @@ function UsuarioModal({ mode, usuario, open, onClose, onSuccess }: UsuarioModalP
                 onCheckedChange={(v) => set("verificado")(v)}
               />
             </div>
-
-            {mode === "edit" && (
-              <div className="flex items-center justify-between bg-red-50 rounded-xl px-4 py-3">
-                <div>
-                  <p className="text-sm font-medium text-red-800">Bloqueado</p>
-                  <p className="text-xs text-red-500">Sin acceso al sistema</p>
-                </div>
-                <Switch
-                  checked={form.bloqueado}
-                  onCheckedChange={(v) => set("bloqueado")(v)}
-                />
-              </div>
-            )}
           </div>
+
+          {/* Estado de bloqueo — solo lectura en editar, acción desde el botón dedicado */}
+          {mode === "edit" && usuario && (
+            <div className={`flex items-center justify-between rounded-xl px-4 py-3 border ${
+              usuario.bloqueado
+                ? "bg-red-50 border-red-200"
+                : "bg-gray-50 border-gray-200"
+            }`}>
+              <div>
+                <p className={`text-sm font-medium ${usuario.bloqueado ? "text-red-800" : "text-gray-700"}`}>
+                  {usuario.bloqueado ? "🔒 Cuenta bloqueada" : "✓ Cuenta activa"}
+                </p>
+                <p className={`text-xs ${usuario.bloqueado ? "text-red-500" : "text-gray-500"}`}>
+                  {usuario.bloqueado
+                    ? "El usuario no puede iniciar sesión"
+                    : "El usuario tiene acceso completo"}
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                className={`rounded-lg text-xs font-semibold gap-1.5 ${
+                  usuario.bloqueado
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    : "bg-red-600 hover:bg-red-700 text-white"
+                }`}
+                onClick={() => {
+                  if (onBloquear) {
+                    onClose();
+                    onBloquear(usuario);
+                  }
+                }}
+              >
+                {usuario.bloqueado ? (
+                  <><Unlock className="w-3.5 h-3.5" />Desbloquear</>
+                ) : (
+                  <><Lock className="w-3.5 h-3.5" />Bloquear</>
+                )}
+              </Button>
+            </div>
+          )}
 
           <DialogFooter className="gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
@@ -810,48 +836,49 @@ export default function AdminUsuariosPage() {
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Link href={`/admin/dashboard/usuarios/${u.id}`}>
-                      <Button variant="outline" size="sm" className="rounded-lg gap-1.5 text-xs h-8">
-                        <Eye className="w-3.5 h-3.5" />
-                        Ver perfil
-                      </Button>
-                    </Link>
+                  {/* Actions — columna derecha fija */}
+                  <div className="flex flex-col items-end gap-2 shrink-0 min-w-[140px]">
+                    {/* Fila superior: Ver perfil + Editar */}
+                    <div className="flex items-center gap-2">
+                      <Link href={`/admin/dashboard/usuarios/${u.id}`}>
+                        <Button variant="outline" size="sm" className="rounded-lg gap-1.5 text-xs h-8 whitespace-nowrap">
+                          <Eye className="w-3.5 h-3.5" />
+                          Ver perfil
+                        </Button>
+                      </Link>
 
-                    {u.rol !== "ADMIN" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="rounded-lg gap-1.5 text-xs h-8"
-                        onClick={() => setEditTarget(u)}
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                        Editar
-                      </Button>
-                    )}
+                      {u.rol !== "ADMIN" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-lg gap-1.5 text-xs h-8"
+                          onClick={() => setEditTarget(u)}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          Editar
+                        </Button>
+                      )}
+                    </div>
 
-                    {u.rol !== "ADMIN" && (
+                    {/* Fila inferior: Bloquear / Desbloquear (botón completo, siempre visible) */}
+                    {u.rol !== "ADMIN" ? (
                       <Button
-                        variant={u.bloqueado ? "outline" : "destructive"}
                         size="sm"
-                        className={`rounded-lg gap-1.5 text-xs h-8 ${
+                        className={`w-full rounded-lg gap-1.5 text-xs h-8 font-semibold ${
                           u.bloqueado
-                            ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                            : ""
+                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                            : "bg-red-600 hover:bg-red-700 text-white"
                         }`}
                         onClick={() => setBloqueoTarget(u)}
                       >
                         {u.bloqueado ? (
-                          <><Unlock className="w-3.5 h-3.5" />Desbloquear</>
+                          <><Unlock className="w-3.5 h-3.5" />Desbloquear cuenta</>
                         ) : (
-                          <><Lock className="w-3.5 h-3.5" />Bloquear</>
+                          <><Lock className="w-3.5 h-3.5" />Bloquear cuenta</>
                         )}
                       </Button>
-                    )}
-
-                    {u.rol === "ADMIN" && (
-                      <div className="flex items-center gap-1.5 text-xs text-purple-600 bg-purple-50 rounded-lg px-3 py-1.5 border border-purple-100">
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-xs text-purple-600 bg-purple-50 rounded-lg px-3 py-1.5 border border-purple-100 w-full justify-center">
                         <Shield className="w-3.5 h-3.5" />
                         Administrador
                       </div>
@@ -928,6 +955,10 @@ export default function AdminUsuariosPage() {
         open={!!editTarget}
         onClose={() => setEditTarget(null)}
         onSuccess={handleEditSuccess}
+        onBloquear={(u) => {
+          setEditTarget(null);        // cierra el modal de edición
+          setBloqueoTarget(u);        // abre el diálogo de bloqueo con motivo
+        }}
       />
 
       {/* Bloqueo / Desbloqueo — Dialog central */}
