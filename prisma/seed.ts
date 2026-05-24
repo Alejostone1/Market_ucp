@@ -468,7 +468,7 @@ async function main() {
       fechaLimite: d(20),
       medios: {
         create: [
-          { url: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80', tipo: 'IMAGEN', orden: 0, altText: 'Beca universitaria' },
+          { url: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=800&q=80', tipo: 'IMAGEN', orden: 0, altText: 'Beca universitaria' },
         ],
       },
       etiquetas: { create: [{ etiquetaId: etUrgente.id }, { etiquetaId: etPremium.id }] },
