@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { motion, useInView } from "framer-motion";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
-  Search, ArrowRight, Package, Zap, ShieldCheck,
+  Search, ArrowRight, Package, Zap,
   Users, Star, TrendingUp, ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,36 @@ const TIPO_COLORS: Record<string, string> = {
   CONVOCATORIA: "bg-orange-100 text-orange-700",
 };
 const TIPO_LABEL: Record<string, string> = { PRODUCTO: "Producto", SERVICIO: "Servicio", EVENTO: "Evento", CONVOCATORIA: "Convocatoria" };
+
+// ── Imágenes para categorías (Unsplash) ───────────────────────────────────────
+
+const CAT_IMAGES: Record<string, string> = {
+  eventos:       "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=700&q=80",
+  libros:        "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=700&q=80",
+  oportunidades: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=700&q=80",
+  servicios:     "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=700&q=80",
+  tecnologia:    "https://images.unsplash.com/photo-1518770660439-4636190af475?w=700&q=80",
+  tutorias:      "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=700&q=80",
+  musica:        "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=700&q=80",
+  arte:          "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=700&q=80",
+  deporte:       "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=700&q=80",
+  gastronomia:   "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=700&q=80",
+  electronica:   "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=700&q=80",
+  fotografia:    "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=700&q=80",
+};
+
+const DEFAULT_CAT_IMAGE = "https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=700&q=80";
+
+function getCatImage(nombre: string): string {
+  const key = nombre
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, "");
+  return CAT_IMAGES[key] ?? DEFAULT_CAT_IMAGE;
+}
+
+// ── Componentes helpers ───────────────────────────────────────────────────────
 
 function FloatingCard({ pub, className }: { pub: Publicacion; className?: string }) {
   const img = pub.medios?.[0]?.url || "https://images.unsplash.com/photo-1560419015-7c427e8ae5ba?w=400";
@@ -77,7 +107,6 @@ const MARQUEE_ITEMS = [
   "Convocatorias", "Electrónica", "Arte", "Deporte", "Gastronomía", "Música", "Fotografía",
 ];
 
-// Custom bezier matching CSS easeOut — avoids Framer Motion string-ease TS quirk
 const EASE_OUT = [0.25, 0.1, 0.25, 1] as const;
 
 const fadeUp = {
@@ -104,12 +133,15 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
   );
 }
 
+// ── Componente principal ──────────────────────────────────────────────────────
+
 export default function HomePage() {
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [hoveredCat, setHoveredCat] = useState<string | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -130,8 +162,21 @@ export default function HomePage() {
     })();
   }, [mounted]);
 
-  const floatingCards = publicaciones.slice(0, 3);
-  const featuredCards = publicaciones.slice(0, 8);
+  const floatingCards  = publicaciones.slice(0, 3);
+  const featuredCards  = publicaciones.slice(0, 8);
+
+  const displayCats = categorias.length > 0
+    ? categorias
+    : MARQUEE_ITEMS.slice(0, 6).map((n, i) => ({
+        id: String(i), nombre: n,
+        slug: n.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""),
+        color: "#881a1d", icono: null,
+      }));
+
+  // Imagen del panel derecho de categorías
+  const activeCatImage = hoveredCat
+    ? getCatImage(hoveredCat)
+    : getCatImage(displayCats[0]?.nombre ?? "");
 
   return (
     <div suppressHydrationWarning className="overflow-x-hidden">
@@ -141,7 +186,6 @@ export default function HomePage() {
         className="relative min-h-[92vh] flex items-center overflow-hidden"
         style={{ background: "linear-gradient(140deg, #881a1d 0%, #9a1f22 40%, #c55f23 100%)" }}
       >
-        {/* Texturas y luces de fondo */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/5 rounded-full translate-x-1/3 -translate-y-1/3" />
           <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-black/15 rounded-full -translate-x-1/4 translate-y-1/3" />
@@ -156,38 +200,23 @@ export default function HomePage() {
         </div>
 
         <div className="relative z-10 container mx-auto px-4 py-20 grid lg:grid-cols-2 gap-12 items-center">
-          {/* ── Texto ── */}
           <div>
             <motion.h1
               className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.05] text-white mb-6"
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              custom={0}
+              variants={fadeUp} initial="hidden" animate="visible" custom={0}
             >
               Compra, vende<br />
-              <span className="text-[#f4c222]">conecta</span>{" "}
-              en la UCP
+              <span className="text-[#f4c222]">conecta</span>{" "}en la UCP
             </motion.h1>
 
             <motion.p
               className="text-lg text-white/70 mb-10 max-w-lg leading-relaxed"
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              custom={1}
+              variants={fadeUp} initial="hidden" animate="visible" custom={1}
             >
               La plataforma exclusiva para la comunidad de la Universidad Católica de Pereira. Productos, servicios, eventos y oportunidades — todo en un lugar.
             </motion.p>
 
-            {/* Barra de búsqueda */}
-            <motion.div
-              className="relative mb-8"
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              custom={2}
-            >
+            <motion.div className="relative mb-8" variants={fadeUp} initial="hidden" animate="visible" custom={2}>
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
               <input
                 type="text"
@@ -211,36 +240,20 @@ export default function HomePage() {
               </button>
             </motion.div>
 
-            {/* CTAs */}
-            <motion.div
-              className="flex flex-wrap gap-3 mb-12"
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              custom={3}
-            >
+            <motion.div className="flex flex-wrap gap-3 mb-12" variants={fadeUp} initial="hidden" animate="visible" custom={3}>
               <Link href="/explore">
                 <button className="flex items-center gap-2 bg-white text-[#881a1d] font-bold px-7 py-3.5 rounded-2xl transition-all hover:scale-105 shadow-xl hover:shadow-2xl">
-                  <Package className="w-4 h-4" />
-                  Explorar todo
+                  <Package className="w-4 h-4" />Explorar todo
                 </button>
               </Link>
               <Link href="/register">
                 <button className="flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white font-semibold px-7 py-3.5 rounded-2xl border border-white/30 transition-all hover:scale-105 backdrop-blur">
-                  Crear cuenta gratis
-                  <ArrowRight className="w-4 h-4" />
+                  Crear cuenta gratis<ArrowRight className="w-4 h-4" />
                 </button>
               </Link>
             </motion.div>
 
-            {/* Stats pequeños */}
-            <motion.div
-              className="flex gap-8"
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              custom={4}
-            >
+            <motion.div className="flex gap-8" variants={fadeUp} initial="hidden" animate="visible" custom={4}>
               {[
                 { value: 500, suffix: "+", label: "Publicaciones" },
                 { value: 1200, suffix: "+", label: "Estudiantes" },
@@ -256,7 +269,6 @@ export default function HomePage() {
             </motion.div>
           </div>
 
-          {/* ── Cards flotantes ── */}
           <motion.div
             className="relative hidden lg:flex items-center justify-center h-[520px]"
             initial={{ opacity: 0, scale: 0.95 }}
@@ -282,7 +294,6 @@ export default function HomePage() {
           </motion.div>
         </div>
 
-        {/* Ola separadora */}
         <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none">
           <svg viewBox="0 0 1440 60" preserveAspectRatio="none" className="w-full h-12 fill-white">
             <path d="M0,60 C360,0 1080,60 1440,20 L1440,60 Z" />
@@ -295,8 +306,7 @@ export default function HomePage() {
         <div className="flex gap-6 animate-marquee whitespace-nowrap">
           {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
             <span key={i} className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#881a1d]" />
-              {item}
+              <span className="w-1.5 h-1.5 rounded-full bg-[#881a1d]" />{item}
             </span>
           ))}
         </div>
@@ -307,10 +317,10 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
-              { icon: <Package className="w-6 h-6" />, value: 500, suffix: "+", label: "Productos activos" },
-              { icon: <Users className="w-6 h-6" />, value: 1200, suffix: "+", label: "Usuarios registrados" },
-              { icon: <Zap className="w-6 h-6" />, value: 12, suffix: "", label: "Categorías" },
-              { icon: <Star className="w-6 h-6" />, value: 48, suffix: "/5.0", label: "Calificación promedio" },
+              { icon: <Package className="w-6 h-6" />, value: 500,  suffix: "+",    label: "Productos activos" },
+              { icon: <Users   className="w-6 h-6" />, value: 1200, suffix: "+",    label: "Usuarios registrados" },
+              { icon: <Zap     className="w-6 h-6" />, value: 12,   suffix: "",     label: "Categorías" },
+              { icon: <Star    className="w-6 h-6" />, value: 48,   suffix: "/5.0", label: "Calificación promedio" },
             ].map((s, i) => (
               <div key={i} className="text-white">
                 <div className="flex justify-center mb-2 text-[#f4c222]">{s.icon}</div>
@@ -327,11 +337,7 @@ export default function HomePage() {
       {/* ══════════════ PUBLICACIONES RECIENTES ══════════════ */}
       <Section className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <motion.div
-            className="flex items-end justify-between mb-10"
-            variants={fadeUp}
-            custom={0}
-          >
+          <motion.div className="flex items-end justify-between mb-10" variants={fadeUp} custom={0}>
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="w-5 h-5 text-[#881a1d]" />
@@ -368,85 +374,299 @@ export default function HomePage() {
         </div>
       </Section>
 
-      {/* ══════════════ ¿POR QUÉ UCP MARKETPLACE? ══════════════ */}
-      <Section className="py-20 bg-gray-50">
+      {/* ══════════════════════════════════════════════════════════════════
+          ¿POR QUÉ UCP MARKETPLACE? — Bento magazine con fotos reales
+      ══════════════════════════════════════════════════════════════════ */}
+      <Section className="py-24 bg-gray-50">
         <div className="container mx-auto px-4">
+
+          {/* Encabezado */}
           <motion.div className="text-center mb-14" variants={fadeUp} custom={0}>
             <span className="text-sm font-bold text-[#881a1d] uppercase tracking-widest">¿Por qué elegirnos?</span>
-            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mt-2">Hecho para la comunidad UCP</h2>
+            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mt-2">
+              Hecho para la comunidad UCP
+            </h2>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {[
-              {
-                icon: <ShieldCheck className="w-8 h-8" />,
-                title: "Comunidad verificada",
-                desc: "Solo estudiantes y aliados de la UCP. Tu seguridad y confianza importan desde el primer clic.",
-                color: "bg-blue-50 text-blue-600",
-              },
-              {
-                icon: <Zap className="w-8 h-8" />,
-                title: "Contacto directo",
-                desc: "Sin intermediarios. Habla con el vendedor al instante por chat o WhatsApp y cierra el trato.",
-                color: "bg-[#881a1d]/8 text-[#881a1d]",
-              },
-              {
-                icon: <TrendingUp className="w-8 h-8" />,
-                title: "Crece dentro del campus",
-                desc: "Publica lo que tienes, ofrece tus servicios y llega a más de 1.200 personas del campus.",
-                color: "bg-amber-50 text-amber-600",
-              },
-            ].map((f, i) => (
-              <motion.div
-                key={i}
-                className="bg-white rounded-3xl p-8 shadow-sm hover:shadow-lg transition-shadow group"
-                variants={fadeUp}
-                custom={i + 1}
-              >
-                <div className={`inline-flex p-3 rounded-2xl mb-5 ${f.color} group-hover:scale-110 transition-transform`}>
-                  {f.icon}
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{f.title}</h3>
-                <p className="text-gray-500 leading-relaxed">{f.desc}</p>
-              </motion.div>
-            ))}
+          {/* ── Bento grid ── */}
+          <div className="grid grid-cols-1 md:grid-cols-3 md:auto-rows-[300px] gap-4 max-w-6xl mx-auto">
+
+            {/* Card 1 — Grande, 2 columnas × 2 filas */}
+            <motion.div
+              className="md:col-span-2 md:row-span-2 relative rounded-3xl overflow-hidden group min-h-[320px] cursor-pointer"
+              variants={fadeUp}
+              custom={1}
+            >
+              <img
+                src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1000&q=80"
+                alt="Comunidad UCP verificada"
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              {/* Gradiente oscuro */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/10" />
+
+              {/* Número decorativo */}
+              <span className="absolute top-7 left-8 text-[7rem] font-black text-white/10 leading-none select-none">
+                01
+              </span>
+
+              {/* Texto */}
+              <div className="absolute bottom-0 left-0 right-0 p-8">
+                <span className="inline-block text-[#f4c222] text-xs font-bold uppercase tracking-widest mb-3">
+                  Comunidad
+                </span>
+                <h3 className="text-2xl sm:text-3xl font-black text-white mb-3 leading-tight">
+                  Comunidad verificada
+                </h3>
+                <p className="text-white/65 text-sm sm:text-base leading-relaxed max-w-md">
+                  Solo estudiantes y aliados de la UCP. Tu seguridad y confianza importan desde el primer clic.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Card 2 — Pequeña, columna derecha fila 1 */}
+            <motion.div
+              className="relative rounded-3xl overflow-hidden group min-h-[260px] cursor-pointer"
+              variants={fadeUp}
+              custom={2}
+            >
+              <img
+                src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=700&q=80"
+                alt="Contacto directo"
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#881a1d]/90 via-[#881a1d]/30 to-transparent" />
+
+              <span className="absolute top-5 left-6 text-[5.5rem] font-black text-white/10 leading-none select-none">
+                02
+              </span>
+
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                <span className="inline-block text-white/60 text-[10px] font-bold uppercase tracking-widest mb-2">
+                  Conexión
+                </span>
+                <h3 className="text-xl font-black text-white mb-1.5 leading-snug">
+                  Contacto directo
+                </h3>
+                <p className="text-white/65 text-sm leading-relaxed">
+                  Sin intermediarios. Chat o WhatsApp al instante.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Card 3 — Pequeña, columna derecha fila 2 */}
+            <motion.div
+              className="relative rounded-3xl overflow-hidden group min-h-[260px] cursor-pointer"
+              variants={fadeUp}
+              custom={3}
+            >
+              <img
+                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=700&q=80"
+                alt="Crece dentro del campus"
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/35 to-transparent" />
+
+              <span className="absolute top-5 left-6 text-[5.5rem] font-black text-white/10 leading-none select-none">
+                03
+              </span>
+
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                <span className="inline-block text-[#f4c222]/80 text-[10px] font-bold uppercase tracking-widest mb-2">
+                  Crecimiento
+                </span>
+                <h3 className="text-xl font-black text-white mb-1.5 leading-snug">
+                  Crece en el campus
+                </h3>
+                <p className="text-white/65 text-sm leading-relaxed">
+                  Llega a más de 1.200 personas del campus.
+                </p>
+              </div>
+            </motion.div>
+
           </div>
         </div>
       </Section>
 
-      {/* ══════════════ CATEGORÍAS ══════════════ */}
-      <Section className="py-20 bg-white">
+      {/* ══════════════════════════════════════════════════════════════════
+          CATEGORÍAS — Split screen interactivo + Grid móvil
+      ══════════════════════════════════════════════════════════════════ */}
+      <Section className="py-24 bg-white">
         <div className="container mx-auto px-4">
+
+          {/* Encabezado */}
           <motion.div className="text-center mb-12" variants={fadeUp} custom={0}>
             <span className="text-sm font-bold text-[#881a1d] uppercase tracking-widest">Explora</span>
             <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mt-2">Categorías</h2>
           </motion.div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 max-w-5xl mx-auto">
-            {(categorias.length > 0
-              ? categorias
-              : MARQUEE_ITEMS.slice(0, 6).map((n, i) => ({ id: String(i), nombre: n, slug: n.toLowerCase(), color: "#881a1d", icono: null }))
-            ).map((cat, i) => (
-              <motion.div key={cat.id} variants={fadeUp} custom={i * 0.5}>
-                <Link href={"/explore?categoria=" + cat.slug}>
-                  <div className="group flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-transparent hover:border-[#881a1d] bg-gray-50 hover:bg-[#881a1d]/5 transition-all duration-200 cursor-pointer">
-                    <div className="w-12 h-12 rounded-2xl bg-white shadow-sm group-hover:bg-[#881a1d] flex items-center justify-center transition-colors">
-                      <Package className="w-5 h-5 text-gray-500 group-hover:text-white transition-colors" />
+
+          {/* ── Desktop: split screen ── */}
+          <div className="hidden md:flex max-w-5xl mx-auto rounded-3xl overflow-hidden shadow-2xl h-[500px]"
+               style={{ boxShadow: "0 25px 60px -10px rgba(136,26,29,0.35)" }}>
+
+            {/* Panel izquierdo — rojo institucional UCP */}
+            <div
+              className="w-[42%] flex flex-col shrink-0 relative overflow-hidden"
+              style={{ background: "linear-gradient(160deg, #6b1215 0%, #881a1d 55%, #a02224 100%)" }}
+            >
+              {/* Patrón de puntos decorativo */}
+              <div
+                className="absolute inset-0 opacity-[0.07] pointer-events-none"
+                style={{
+                  backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+                  backgroundSize: "20px 20px",
+                }}
+              />
+
+              {/* Header */}
+              <div className="relative px-8 pt-8 pb-5 border-b border-white/10">
+                <p className="text-white/40 text-[10px] uppercase tracking-[0.2em] font-bold mb-1">
+                  Navegar por
+                </p>
+                <p className="text-white text-xl font-black tracking-tight">
+                  Todas las categorías
+                </p>
+              </div>
+
+              {/* Lista */}
+              <div className="relative flex-1 overflow-y-auto">
+                {displayCats.map((cat, i) => {
+                  const active = hoveredCat === cat.nombre;
+                  return (
+                    <motion.div key={cat.id} variants={fadeUp} custom={i * 0.25}>
+                      <Link href={`/explore?categoria=${cat.slug}`}>
+                        <div
+                          onMouseEnter={() => setHoveredCat(cat.nombre)}
+                          onMouseLeave={() => setHoveredCat(null)}
+                          className={`flex items-center gap-4 px-8 py-[14px] border-b border-white/[0.07] cursor-pointer transition-all duration-200 ${
+                            active ? "bg-white/15 pl-10" : "hover:bg-white/8"
+                          }`}
+                        >
+                          {/* Número */}
+                          <span className={`text-xs font-bold w-5 shrink-0 tabular-nums transition-colors duration-200 ${
+                            active ? "text-[#f4c222]/70" : "text-white/25"
+                          }`}>
+                            {String(i + 1).padStart(2, "0")}
+                          </span>
+
+                          {/* Nombre */}
+                          <span className={`text-[15px] font-black transition-all duration-200 leading-none tracking-tight ${
+                            active ? "text-[#f4c222]" : "text-white/85 hover:text-white"
+                          }`}>
+                            {cat.nombre}
+                          </span>
+
+                          {/* Flecha animada */}
+                          <ChevronRight className={`w-4 h-4 ml-auto transition-all duration-200 shrink-0 ${
+                            active
+                              ? "text-[#f4c222] opacity-100 translate-x-0"
+                              : "text-white/0 -translate-x-2"
+                          }`} />
+                        </div>
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              {/* Degradado bottom para indicar scroll */}
+              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#6b1215]/80 to-transparent pointer-events-none" />
+            </div>
+
+            {/* Panel derecho — foto que cambia */}
+            <div className="flex-1 relative overflow-hidden bg-[#3a0a0c]">
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={activeCatImage}
+                  src={activeCatImage}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover"
+                  initial={{ opacity: 0, scale: 1.04 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.45, ease: "easeOut" }}
+                />
+              </AnimatePresence>
+
+              {/* Overlay con tinte institucional en el borde izquierdo */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: "linear-gradient(to right, rgba(107,18,21,0.45) 0%, transparent 50%)",
+                }}
+              />
+
+              {/* Etiqueta de categoría activa */}
+              <AnimatePresence mode="wait">
+                {hoveredCat ? (
+                  <motion.div
+                    key={hoveredCat}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.25 }}
+                    className="absolute bottom-8 right-8 text-right pointer-events-none"
+                  >
+                    <p className="text-[#f4c222]/70 text-[10px] font-bold uppercase tracking-[0.18em] mb-1">
+                      Categoría
+                    </p>
+                    <p className="text-white text-3xl font-black drop-shadow-lg tracking-tight">{hoveredCat}</p>
+                    <span className="inline-flex items-center gap-1.5 mt-3 text-xs font-bold text-[#881a1d] bg-[#f4c222] px-3.5 py-1.5 rounded-full shadow-md">
+                      Ver publicaciones <ChevronRight className="w-3 h-3" />
+                    </span>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="idle"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 flex items-end justify-end p-8 pointer-events-none"
+                  >
+                    <span className="inline-flex items-center gap-2 text-white/30 text-xs font-semibold bg-black/20 backdrop-blur-sm px-3 py-2 rounded-full border border-white/10">
+                      Pasa el cursor para explorar
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* ── Móvil: grid de fotos ── */}
+          <div className="md:hidden grid grid-cols-2 gap-3">
+            {displayCats.map((cat, i) => (
+              <motion.div key={cat.id} variants={fadeUp} custom={i * 0.2}>
+                <Link href={`/explore?categoria=${cat.slug}`}>
+                  <div className="relative rounded-2xl overflow-hidden aspect-[4/3] group cursor-pointer">
+                    {/* Foto */}
+                    <img
+                      src={getCatImage(cat.nombre)}
+                      alt={cat.nombre}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    {/* Gradiente permanente desde abajo */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#881a1d]/95 via-[#881a1d]/10 to-transparent" />
+                    {/* Overlay rojo institucional en hover */}
+                    <div className="absolute inset-0 bg-[#881a1d]/0 group-hover:bg-[#881a1d]/50 transition-colors duration-300" />
+                    {/* Nombre */}
+                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                      <span className="text-white font-black text-sm leading-tight tracking-tight">{cat.nombre}</span>
                     </div>
-                    <span className="text-sm font-bold text-gray-700 group-hover:text-[#881a1d] text-center transition-colors">
-                      {cat.nombre}
+                    {/* Número decorativo */}
+                    <span className="absolute top-2.5 right-3 text-white/20 text-[10px] font-black tabular-nums">
+                      {String(i + 1).padStart(2, "0")}
                     </span>
                   </div>
                 </Link>
               </motion.div>
             ))}
           </div>
+
         </div>
       </Section>
 
       {/* ══════════════ CTA FINAL ══════════════ */}
-      <Section
-        className="relative py-24 overflow-hidden"
-      >
+      <Section className="relative py-24 overflow-hidden">
         <div
           className="absolute inset-0"
           style={{ background: "linear-gradient(135deg, #881a1d 0%, #9a1f22 50%, #c55f23 100%)" }}
@@ -466,26 +686,17 @@ export default function HomePage() {
         <div className="relative z-10 container mx-auto px-4 text-center">
           <motion.h2
             className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6 max-w-3xl mx-auto leading-tight"
-            variants={fadeUp}
-            custom={0}
+            variants={fadeUp} custom={0}
           >
             Haz parte del<br />
             <span className="text-[#f4c222]">marketplace UCP</span>
           </motion.h2>
 
-          <motion.p
-            className="text-white/65 text-lg mb-10 max-w-lg mx-auto"
-            variants={fadeUp}
-            custom={1}
-          >
+          <motion.p className="text-white/65 text-lg mb-10 max-w-lg mx-auto" variants={fadeUp} custom={1}>
             Crea tu cuenta con tu correo institucional y empieza a comprar, vender y conectar con toda tu comunidad.
           </motion.p>
 
-          <motion.div
-            className="flex flex-wrap gap-4 justify-center"
-            variants={fadeUp}
-            custom={2}
-          >
+          <motion.div className="flex flex-wrap gap-4 justify-center" variants={fadeUp} custom={2}>
             <Link href="/register">
               <button className="bg-white text-[#881a1d] font-bold px-10 py-4 rounded-2xl transition-all hover:scale-105 shadow-xl text-lg hover:shadow-2xl">
                 Crear cuenta gratis

@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 
 const updatePublicacionSchema = z.object({
-  estado: z.enum(['APROBADA', 'RECHAZADA', 'ARCHIVADA']),
+  estado: z.enum(['APROBADA', 'RECHAZADA', 'ARCHIVADA', 'SUSPENDIDA', 'PENDIENTE']),
   notaRechazo: z.string().optional(),
 });
 
@@ -129,22 +129,27 @@ export async function PATCH(request: Request) {
       },
     });
 
-    // Crear notificación para el usuario
-    const tipoNotificacion = validatedData.estado === 'APROBADA' 
-      ? 'PUBLICACION_APROBADA' 
-      : 'PUBLICACION_RECHAZADA';
+    // Crear notificación para el usuario según el nuevo estado
+    const mapaNotif: Record<string, { tipo: "PUBLICACION_APROBADA" | "PUBLICACION_RECHAZADA" | "PUBLICACION_SUSPENDIDA"; mensaje: string }> = {
+      APROBADA:   { tipo: "PUBLICACION_APROBADA",    mensaje: "Tu publicación ha sido aprobada y está visible en el marketplace." },
+      RECHAZADA:  { tipo: "PUBLICACION_RECHAZADA",   mensaje: "Tu publicación ha sido rechazada. Puedes contactar al administrador para más información." },
+      ARCHIVADA:  { tipo: "PUBLICACION_RECHAZADA",   mensaje: "Tu publicación ha sido archivada por el administrador." },
+      SUSPENDIDA: { tipo: "PUBLICACION_SUSPENDIDA",  mensaje: "Tu publicación ha sido suspendida temporalmente. Un administrador la está revisando." },
+      PENDIENTE:  { tipo: "PUBLICACION_RECHAZADA",   mensaje: "Tu publicación volvió a estado pendiente de revisión." },
+    };
 
-    await prisma.notificacion.create({
-      data: {
-        usuarioId: publicacionActual.autorId,
-        tipo: tipoNotificacion,
-        referenciaId: id,
-        mensaje: validatedData.estado === 'APROBADA'
-          ? 'Tu publicación ha sido aprobada'
-          : 'Tu publicación ha sido rechazada',
-        leida: false,
-      },
-    });
+    const notifData = mapaNotif[validatedData.estado];
+    if (notifData) {
+      await prisma.notificacion.create({
+        data: {
+          usuarioId:    publicacionActual.autorId,
+          tipo:         notifData.tipo,
+          referenciaId: id,
+          mensaje:      notifData.mensaje,
+          leida:        false,
+        },
+      });
+    }
 
     return NextResponse.json(publicacionActualizada);
   } catch (error) {

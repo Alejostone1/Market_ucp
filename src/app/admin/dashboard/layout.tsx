@@ -5,13 +5,14 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, FileText, Users, AlertTriangle,
-  Tag, Bell, Home,
+  Tag, Bell, Home, MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [pendingReportes, setPendingReportes] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   // Cargar conteo de reportes pendientes
   useEffect(() => {
@@ -19,7 +20,23 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
       .then((r) => r.json())
       .then((d) => setPendingReportes(d.pendingCount ?? 0))
       .catch(() => {});
-  }, [pathname]); // re-fetch al navegar
+  }, [pathname]);
+
+  // Cargar conteo de mensajes no leídos
+  useEffect(() => {
+    const fetchUnread = () => {
+      fetch("/api/conversaciones", { cache: "no-store" })
+        .then((r) => r.json())
+        .then((data: { unread: number }[]) => {
+          if (!Array.isArray(data)) return;
+          setUnreadMessages(data.reduce((sum, c) => sum + (c.unread ?? 0), 0));
+        })
+        .catch(() => {});
+    };
+    fetchUnread();
+    const id = setInterval(fetchUnread, 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   const isActive = (path: string) => {
     if (path === "/admin/dashboard") return pathname === path;
@@ -27,12 +44,13 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
   };
 
   const NAV = [
-    { title: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, badge: 0 },
-    { title: "Publicaciones", href: "/admin/dashboard/publicaciones", icon: FileText, badge: 0 },
-    { title: "Usuarios", href: "/admin/dashboard/usuarios", icon: Users, badge: 0 },
-    { title: "Reportes", href: "/admin/dashboard/reportes", icon: AlertTriangle, badge: pendingReportes },
-    { title: "Categorías", href: "/admin/dashboard/categorias", icon: Tag, badge: 0 },
-    { title: "Notificaciones", href: "/admin/dashboard/notificaciones", icon: Bell, badge: 0 },
+    { title: "Dashboard",      href: "/admin/dashboard",               icon: LayoutDashboard, badge: 0 },
+    { title: "Publicaciones",  href: "/admin/dashboard/publicaciones", icon: FileText,        badge: 0 },
+    { title: "Usuarios",       href: "/admin/dashboard/usuarios",      icon: Users,           badge: 0 },
+    { title: "Reportes",       href: "/admin/dashboard/reportes",      icon: AlertTriangle,   badge: pendingReportes },
+    { title: "Categorías",     href: "/admin/dashboard/categorias",    icon: Tag,             badge: 0 },
+    { title: "Notificaciones", href: "/admin/dashboard/notificaciones",icon: Bell,            badge: 0 },
+    { title: "Mensajes",       href: "/admin/dashboard/messages",      icon: MessageSquare,   badge: unreadMessages },
   ];
 
   return (

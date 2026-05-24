@@ -260,11 +260,16 @@ model Reporte {
   descripcion   String?        @base_de_datos.Text
   estado        EstadoReporte  @default(PENDIENTE)
 
+  // Trazabilidad de resolución
+  resolvidoEn   DateTime?
+  resolvidoPorId String?
+
   creadoEn      DateTime @default(now())
 
   @@unique([reportanteId, publicacionId])
   @@index([estado])
   @@index([publicacionId])
+  @@index([creadoEn])
 }
 
 //////////////////////////////////////////////////////
@@ -282,8 +287,12 @@ model HistorialPublicacion {
 
   nota            String? @base_de_datos.Text
 
-  adminId         String
-  admin           Usuario @relation(fields: [adminId], references: [id])
+  // Nullable: null cuando la acción fue ejecutada por el SISTEMA (moderación automática)
+  adminId         String?
+  admin           Usuario? @relation(fields: [adminId], references: [id])
+
+  // true cuando el cambio fue producido por lógica automática (sin intervención humana)
+  esAutomatico    Boolean  @default(false)
 
   creadoEn        DateTime @default(now())
 
@@ -336,6 +345,7 @@ enum EstadoPublicacion {
   APROBADA
   RECHAZADA
   ARCHIVADA
+  SUSPENDIDA
 }
 
 enum TipoPrecio {
@@ -368,7 +378,9 @@ enum EstadoReporte {
 enum TipoNotificacion {
   PUBLICACION_APROBADA
   PUBLICACION_RECHAZADA
+  PUBLICACION_SUSPENDIDA
   MENSAJE_NUEVO
   FAVORITO_NUEVO
+  REPORTE_NUEVO
   REPORTE_RESUELTO
 }

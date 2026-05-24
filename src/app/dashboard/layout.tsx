@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 const navItems = [
   { title: "Inicio", href: "/dashboard/student", icon: Home },
@@ -29,7 +30,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [usuario, isLoading, router]);
 
   const handleLogout = () => {
-    if (window.confirm("¿Estás seguro de que quieres cerrar sesión?")) logout();
+    toast("¿Cerrar sesión?", {
+      description: "Se cerrará tu sesión en UCP Marketplace.",
+      action: {
+        label: "Cerrar sesión",
+        onClick: () => logout(),
+      },
+      cancel: {
+        label: "Cancelar",
+        onClick: () => {},
+      },
+      duration: 8000,
+    });
   };
 
   if (isLoading || usuario?.rol === "ADMIN") {

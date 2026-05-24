@@ -57,7 +57,12 @@ export function ContactButton({
       }
 
       const data = await res.json();
-      router.push(`/dashboard/student/messages?c=${data.id}`);
+      // Route to the correct messages page based on the current user's role
+      const messagesPath =
+        usuario?.rol === "ADMIN"
+          ? `/admin/dashboard/messages?c=${data.id}`
+          : `/dashboard/student/messages?c=${data.id}`;
+      router.push(messagesPath);
     } catch {
       toast.error("Error al conectar con el servidor");
     } finally {

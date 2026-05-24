@@ -7,6 +7,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { MessageProvider } from "@/contexts/MessageContext";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -32,6 +33,7 @@ export default function RootLayout({
                   <main>{children}</main>
                   <Footer />
                 </div>
+                <Toaster position="bottom-right" richColors closeButton />
               </MessageProvider>
             </FavoritesProvider>
           </CartProvider>

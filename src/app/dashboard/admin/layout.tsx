@@ -2,24 +2,35 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Users, 
-  AlertTriangle, 
-  Tag, 
-  Bell, 
+import {
+  LayoutDashboard,
+  FileText,
+  Users,
+  AlertTriangle,
+  Tag,
+  Bell,
   LogOut,
   Home,
-  Shield
+  Shield,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { redirect } from "next/navigation";
+import { PendingReportsBadge } from "@/components/admin/PendingReportsBadge";
+import { UnreadMessagesBadge } from "@/components/admin/UnreadMessagesBadge";
+import { toast } from "sonner";
 
-const sidebarNavItems = [
+type SidebarItem = {
+  title: string;
+  href: string;
+  icon: React.ElementType;
+  BadgeComp?: React.ComponentType;
+};
+
+const sidebarNavItems: SidebarItem[] = [
   {
     title: "Dashboard",
     href: "/dashboard/admin",
@@ -39,6 +50,7 @@ const sidebarNavItems = [
     title: "Reportes",
     href: "/dashboard/admin/reportes",
     icon: AlertTriangle,
+    BadgeComp: PendingReportsBadge,
   },
   {
     title: "Categorías",
@@ -49,6 +61,12 @@ const sidebarNavItems = [
     title: "Notificaciones",
     href: "/dashboard/admin/notificaciones",
     icon: Bell,
+  },
+  {
+    title: "Mensajes",
+    href: "/dashboard/admin/messages",
+    icon: MessageSquare,
+    BadgeComp: UnreadMessagesBadge,
   },
 ];
 
@@ -99,8 +117,21 @@ export default function AdminDashboardLayout({
                 variant="ghost"
                 size="icon"
                 onClick={() => {
-                  logout();
-                  window.location.href = "/login";
+                  toast("¿Cerrar sesión?", {
+                    description: "Se cerrará tu sesión de administrador.",
+                    action: {
+                      label: "Cerrar sesión",
+                      onClick: () => {
+                        logout();
+                        window.location.href = "/login";
+                      },
+                    },
+                    cancel: {
+                      label: "Cancelar",
+                      onClick: () => {},
+                    },
+                    duration: 8000,
+                  });
                 }}
               >
                 <LogOut className="w-5 h-5" />
@@ -113,22 +144,29 @@ export default function AdminDashboardLayout({
       <div className="flex">
         {/* Sidebar */}
         <aside className="w-64 bg-white border-r min-h-screen p-6 hidden md:block">
-          <nav className="space-y-2">
+          <nav className="space-y-1">
             {sidebarNavItems.map((item) => {
               const Icon = item.icon;
+              const active = isActive(item.href);
+              const BadgeComp = item.BadgeComp;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                    isActive(item.href)
+                    "flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors",
+                    active
                       ? "bg-ucp-rojo text-white"
                       : "text-gray-700 hover:bg-gray-100"
                   )}
                 >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.title}</span>
+                  <Icon className="w-5 h-5 shrink-0" />
+                  <span className="font-medium flex-1">{item.title}</span>
+                  {BadgeComp && (
+                    <span className={active ? "text-white" : ""}>
+                      <BadgeComp />
+                    </span>
+                  )}
                 </Link>
               );
             })}

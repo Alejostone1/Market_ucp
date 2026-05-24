@@ -12,6 +12,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const rol = searchParams.get('rol');
     const bloqueado = searchParams.get('bloqueado');
+    const buscar = searchParams.get('buscar')?.trim();
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
 
@@ -23,6 +24,13 @@ export async function GET(request: Request) {
 
     if (bloqueado !== null && bloqueado !== undefined) {
       where.bloqueado = bloqueado === 'true';
+    }
+
+    if (buscar) {
+      where.OR = [
+        { nombre: { contains: buscar, mode: 'insensitive' } },
+        { correo: { contains: buscar, mode: 'insensitive' } },
+      ];
     }
 
     const [usuarios, total] = await Promise.all([

@@ -115,34 +115,34 @@ export default function AdminNotificacionesPage() {
   const getTipoBadge = (tipo: string) => {
     switch (tipo) {
       case "PUBLICACION_APROBADA":
-        return <Badge className="bg-ucp-verde text-white">Aprobada</Badge>;
+        return <Badge className="bg-green-600 text-white text-xs">Aprobada</Badge>;
       case "PUBLICACION_RECHAZADA":
-        return <Badge className="bg-ucp-rojo text-white">Rechazada</Badge>;
+        return <Badge className="bg-red-600 text-white text-xs">Rechazada</Badge>;
+      case "PUBLICACION_SUSPENDIDA":
+        return <Badge className="bg-purple-600 text-white text-xs">Suspendida</Badge>;
       case "MENSAJE_NUEVO":
-        return <Badge className="bg-blue-600 text-white">Mensaje</Badge>;
+        return <Badge className="bg-blue-600 text-white text-xs">Mensaje</Badge>;
       case "FAVORITO_NUEVO":
-        return <Badge className="bg-purple-600 text-white">Favorito</Badge>;
+        return <Badge className="bg-pink-600 text-white text-xs">Favorito</Badge>;
+      case "REPORTE_NUEVO":
+        return <Badge className="bg-amber-600 text-white text-xs">⚑ Reporte nuevo</Badge>;
       case "REPORTE_RESUELTO":
-        return <Badge className="bg-orange-600 text-white">Reporte</Badge>;
+        return <Badge className="bg-orange-500 text-white text-xs">Reporte resuelto</Badge>;
       default:
-        return <Badge variant="outline">{tipo}</Badge>;
+        return <Badge variant="outline" className="text-xs">{tipo}</Badge>;
     }
   };
 
   const getTipoLabel = (tipo: string) => {
     switch (tipo) {
-      case "PUBLICACION_APROBADA":
-        return "Publicación Aprobada";
-      case "PUBLICACION_RECHAZADA":
-        return "Publicación Rechazada";
-      case "MENSAJE_NUEVO":
-        return "Nuevo Mensaje";
-      case "FAVORITO_NUEVO":
-        return "Nuevo Favorito";
-      case "REPORTE_RESUELTO":
-        return "Reporte Resuelto";
-      default:
-        return tipo;
+      case "PUBLICACION_APROBADA":   return "Publicación Aprobada";
+      case "PUBLICACION_RECHAZADA":  return "Publicación Rechazada";
+      case "PUBLICACION_SUSPENDIDA": return "Publicación Suspendida";
+      case "MENSAJE_NUEVO":          return "Nuevo Mensaje";
+      case "FAVORITO_NUEVO":         return "Nuevo Favorito";
+      case "REPORTE_NUEVO":          return "Nuevo Reporte";
+      case "REPORTE_RESUELTO":       return "Reporte Resuelto";
+      default:                       return tipo;
     }
   };
 
@@ -174,7 +174,9 @@ export default function AdminNotificacionesPage() {
                   <SelectItem value="PUBLICACION_RECHAZADA">Rechazadas</SelectItem>
                   <SelectItem value="MENSAJE_NUEVO">Mensajes</SelectItem>
                   <SelectItem value="FAVORITO_NUEVO">Favoritos</SelectItem>
-                  <SelectItem value="REPORTE_RESUELTO">Reportes</SelectItem>
+                  <SelectItem value="REPORTE_NUEVO">Reportes nuevos</SelectItem>
+                  <SelectItem value="REPORTE_RESUELTO">Reportes resueltos</SelectItem>
+                  <SelectItem value="PUBLICACION_SUSPENDIDA">Publicaciones suspendidas</SelectItem>
                 </SelectContent>
               </Select>
 

@@ -303,7 +303,7 @@ export default function AdminReportesPage() {
 
       {/* ── Dialog de resolución ── */}
       <Dialog open={dialogOpen} onOpenChange={(v) => !v && setDialogOpen(false)}>
-        <DialogContent className="max-w-lg rounded-2xl p-0 overflow-hidden">
+        <DialogContent className="max-w-lg rounded-2xl p-0 overflow-hidden bg-white dark:bg-zinc-900">
           <DialogHeader className="px-6 pt-6 pb-0">
             <DialogTitle className="flex items-center gap-2 text-lg font-bold">
               <AlertTriangle className="w-5 h-5 text-amber-500" />
