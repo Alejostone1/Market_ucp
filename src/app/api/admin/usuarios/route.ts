@@ -22,16 +22,14 @@ const patchSchema = z.object({
   correo: z.string().email().toLowerCase().trim().optional(),
   rol: z.enum(['ESTUDIANTE', 'ALIADO']).optional(),
   facultad: z.string().max(100).trim().optional().nullable(),
-  semestre: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(12)
-    .optional()
-    .nullable(),
+  semestre: z.preprocess(
+    (v) => (v === null || v === '' || v === undefined ? undefined : v),
+    z.coerce.number().int().min(1).max(12).optional()
+  ).optional().nullable(),
   telefono: z.string().max(20).trim().optional().nullable(),
   verificado: z.boolean().optional(),
   bloqueado: z.boolean().optional(),
+  motivo: z.string().max(500).trim().optional(),
 });
 
 // ── SELECT helper (shared shape) ─────────────────────────────────────────────
@@ -186,7 +184,8 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const { id, ...data } = parsed.data;
+    // Destructure motivo separately — it's not a DB column
+    const { id, motivo, ...data } = parsed.data;
 
     // Verificar que el usuario existe
     const existente = await prisma.usuario.findUnique({ where: { id } });
@@ -212,6 +211,24 @@ export async function PATCH(request: Request) {
       data,
       select: USUARIO_SELECT,
     });
+
+    // Si se está cambiando el estado de bloqueo, crear una notificación para el usuario
+    const cambiandoBloqueo = typeof data.bloqueado === 'boolean' && data.bloqueado !== existente.bloqueado;
+    if (cambiandoBloqueo) {
+      const mensajeBloqueo = data.bloqueado
+        ? `Tu cuenta ha sido suspendida.${motivo ? ` Motivo: ${motivo}` : ''} Contacta a admin@ucp.edu.co para más información.`
+        : `Tu cuenta ha sido reactivada.${motivo ? ` Nota: ${motivo}` : ''} Ya puedes acceder al marketplace.`;
+
+      await prisma.notificacion.create({
+        data: {
+          usuarioId:    id,
+          tipo:         data.bloqueado ? 'PUBLICACION_SUSPENDIDA' : 'PUBLICACION_APROBADA',
+          referenciaId: id,
+          mensaje:      mensajeBloqueo,
+          leida:        false,
+        },
+      }).catch(() => null); // No fallar si la notificación no se puede crear
+    }
 
     return NextResponse.json(usuario);
   } catch (error) {

@@ -28,8 +28,17 @@ export async function POST(request: NextRequest) {
 
     // Verificar si el usuario está bloqueado
     if (usuario.bloqueado) {
+      // Buscar la última notificación de bloqueo para obtener el motivo
+      const notifBloqueo = await prisma.notificacion.findFirst({
+        where: { usuarioId: usuario.id, tipo: 'PUBLICACION_SUSPENDIDA' },
+        orderBy: { creadoEn: 'desc' },
+      }).catch(() => null);
+
+      const mensajeBloqueo = notifBloqueo?.mensaje
+        ?? "Tu cuenta ha sido suspendida. Contacta al administrador en admin@ucp.edu.co para más información.";
+
       return NextResponse.json(
-        { message: "Tu cuenta ha sido bloqueada. Contacta al administrador." },
+        { message: mensajeBloqueo },
         { status: 403 }
       );
     }

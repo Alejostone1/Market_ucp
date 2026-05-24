@@ -19,16 +19,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -134,19 +125,41 @@ function StatCard({
 interface BloqueoDialogProps {
   usuario: UsuarioItem | null;
   loading: boolean;
-  onConfirm: () => void;
+  onConfirm: (motivo: string) => void;
   onCancel: () => void;
 }
 
 function BloqueoDialog({ usuario, loading, onConfirm, onCancel }: BloqueoDialogProps) {
+  const [motivo, setMotivo] = useState("");
+  const [motivoError, setMotivoError] = useState("");
+
+  // Reset motivo when dialog opens for a different user
+  useEffect(() => {
+    setMotivo("");
+    setMotivoError("");
+  }, [usuario?.id]);
+
   if (!usuario) return null;
-  const accion = usuario.bloqueado ? "Desbloquear" : "Bloquear";
+
   const esBloquear = !usuario.bloqueado;
+  const accion = esBloquear ? "Bloquear" : "Desbloquear";
+
+  const handleConfirm = () => {
+    if (esBloquear && !motivo.trim()) {
+      setMotivoError("Debes ingresar el motivo del bloqueo");
+      return;
+    }
+    onConfirm(motivo.trim());
+  };
 
   return (
-    <AlertDialog open={!!usuario} onOpenChange={(open) => !open && onCancel()}>
-      <AlertDialogContent className="max-w-md rounded-2xl bg-white">
-        <AlertDialogHeader>
+    <Dialog open={!!usuario} onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent
+        aria-describedby={undefined}
+        className="max-w-md rounded-2xl bg-white"
+        onInteractOutside={(e) => { if (loading) e.preventDefault(); }}
+      >
+        <DialogHeader>
           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 ${
             esBloquear ? "bg-red-100" : "bg-emerald-100"
           }`}>
@@ -154,17 +167,45 @@ function BloqueoDialog({ usuario, loading, onConfirm, onCancel }: BloqueoDialogP
               ? <Lock className="w-6 h-6 text-red-600" />
               : <Unlock className="w-6 h-6 text-emerald-600" />}
           </div>
-          <AlertDialogTitle className="text-center text-lg font-bold text-gray-900">
+          <DialogTitle className="text-center text-lg font-bold text-gray-900">
             ¿{accion} a {usuario.nombre}?
-          </AlertDialogTitle>
-          <AlertDialogDescription className="text-center text-sm text-gray-600">
+          </DialogTitle>
+          <p className="text-center text-sm text-gray-600 pt-1">
             {esBloquear
-              ? "El usuario perderá acceso completo al marketplace. No podrá iniciar sesión ni interactuar con publicaciones."
-              : "El usuario recuperará acceso completo al marketplace y podrá iniciar sesión nuevamente."}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+              ? "El usuario perderá acceso completo al marketplace y no podrá iniciar sesión."
+              : "El usuario recuperará acceso completo al marketplace."}
+          </p>
+        </DialogHeader>
 
-        <div className={`mx-4 my-1 rounded-xl px-4 py-3 text-sm ${
+        {/* Motivo (requerido para bloquear, opcional para desbloquear) */}
+        <div className="px-1 space-y-1.5">
+          <Label className="text-sm font-medium text-gray-700">
+            {esBloquear ? (
+              <>Motivo del bloqueo <span className="text-red-500">*</span></>
+            ) : (
+              "Observación (opcional)"
+            )}
+          </Label>
+          <Textarea
+            placeholder={
+              esBloquear
+                ? "Describe el motivo por el que se bloquea esta cuenta..."
+                : "Añade una nota sobre el desbloqueo (opcional)"
+            }
+            value={motivo}
+            onChange={(e) => { setMotivo(e.target.value); setMotivoError(""); }}
+            rows={3}
+            className={motivoError ? "border-red-400" : ""}
+          />
+          {motivoError && (
+            <p className="text-xs text-red-500 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" />
+              {motivoError}
+            </p>
+          )}
+        </div>
+
+        <div className={`rounded-xl px-4 py-3 text-sm ${
           esBloquear
             ? "bg-red-50 border border-red-100 text-red-700"
             : "bg-emerald-50 border border-emerald-100 text-emerald-700"
@@ -173,27 +214,30 @@ function BloqueoDialog({ usuario, loading, onConfirm, onCancel }: BloqueoDialogP
             <AlertTriangle className="w-4 h-4 shrink-0" />
             <span>
               {esBloquear
-                ? "Esta acción se puede revertir en cualquier momento."
+                ? "Esta acción se puede revertir en cualquier momento desde este panel."
                 : "El usuario podrá publicar y enviar mensajes de nuevo."}
             </span>
           </div>
         </div>
 
-        <AlertDialogFooter className="gap-2 mt-2">
-          <AlertDialogCancel
+        <DialogFooter className="gap-2">
+          <Button
+            type="button"
+            variant="outline"
             onClick={onCancel}
             disabled={loading}
             className="rounded-xl"
           >
             Cancelar
-          </AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
+          </Button>
+          <Button
+            type="button"
+            onClick={handleConfirm}
             disabled={loading}
-            className={`rounded-xl ${
+            className={`rounded-xl text-white ${
               esBloquear
-                ? "bg-red-600 hover:bg-red-700 text-white focus:ring-red-500"
-                : "bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-emerald-500"
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-emerald-600 hover:bg-emerald-700"
             }`}
           >
             {loading ? (
@@ -201,10 +245,10 @@ function BloqueoDialog({ usuario, loading, onConfirm, onCancel }: BloqueoDialogP
             ) : (
               accion
             )}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -551,29 +595,44 @@ export default function AdminUsuariosPage() {
 
   // ── Bloqueo / Desbloqueo ────────────────────────────────────────────────────
 
-  async function doToggleBloqueo() {
+  async function doToggleBloqueo(motivo: string) {
     if (!bloqueoTarget) return;
+    // Capture values before any state changes
+    const targetId     = bloqueoTarget.id;
+    const targetNombre = bloqueoTarget.nombre;
+    const nuevoBloqueo = !bloqueoTarget.bloqueado;
+
     setActionLoading(true);
+    setBloqueoTarget(null); // close dialog immediately
     try {
       const res = await fetch("/api/admin/usuarios", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: bloqueoTarget.id, bloqueado: !bloqueoTarget.bloqueado }),
+        body: JSON.stringify({
+          id:       targetId,
+          bloqueado: nuevoBloqueo,
+          motivo:   motivo || undefined,
+        }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Error al actualizar");
+      }
       const updated: UsuarioItem = await res.json();
       setUsuarios((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-      // Actualizar stats
       setStats((s) => ({
         ...s,
         bloqueados: updated.bloqueado ? s.bloqueados + 1 : Math.max(0, s.bloqueados - 1),
       }));
-      toast.success(updated.bloqueado ? `${updated.nombre} fue bloqueado` : `${updated.nombre} fue desbloqueado`);
-    } catch {
-      toast.error("Error al actualizar el usuario");
+      toast.success(
+        updated.bloqueado
+          ? `${targetNombre} fue bloqueado correctamente`
+          : `${targetNombre} fue desbloqueado correctamente`
+      );
+    } catch (err) {
+      toast.error((err as Error).message || "Error al actualizar el usuario");
     } finally {
       setActionLoading(false);
-      setBloqueoTarget(null);
     }
   }
 
@@ -871,11 +930,11 @@ export default function AdminUsuariosPage() {
         onSuccess={handleEditSuccess}
       />
 
-      {/* Bloqueo / Desbloqueo — AlertDialog central */}
+      {/* Bloqueo / Desbloqueo — Dialog central */}
       <BloqueoDialog
         usuario={bloqueoTarget}
         loading={actionLoading}
-        onConfirm={doToggleBloqueo}
+        onConfirm={(motivo) => doToggleBloqueo(motivo)}
         onCancel={() => setBloqueoTarget(null)}
       />
     </div>
