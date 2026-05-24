@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Heart, Share2, ShoppingCart, MapPin, Calendar, Shield, ArrowLeft, Flag } from "lucide-react";
+import { Heart, Share2, ShoppingCart, MapPin, Calendar, Shield, ArrowLeft, Flag, Users, Clock, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -245,6 +245,88 @@ export default function PublicationDetailPage() {
                     <span className="font-medium">Vendedor verificado UCP</span>
                   </div>
                 </div>
+
+                {/* ── EVENTO / CONVOCATORIA specific details ────────────────── */}
+                {product.tipo === "EVENTO" && (
+                  <>
+                    <Separator className="my-4" />
+                    <div className="space-y-3">
+                      <h2 className="font-semibold text-gray-900">Detalles del evento</h2>
+
+                      {product.fechaEvento && (
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <Calendar className="w-4 h-4 shrink-0 text-ucp-rojo" />
+                          <span>
+                            <span className="font-medium">Fecha:</span>{" "}
+                            {formatDate(product.fechaEvento)}
+                          </span>
+                        </div>
+                      )}
+
+                      {product.ubicacionEvento && (
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <MapPin className="w-4 h-4 shrink-0 text-ucp-rojo" />
+                          <span>
+                            <span className="font-medium">Lugar:</span>{" "}
+                            {product.ubicacionEvento}
+                          </span>
+                        </div>
+                      )}
+
+                      {product.cupos !== null && product.cupos !== undefined && (
+                        <div className="flex items-start gap-2 text-sm">
+                          <Users className="w-4 h-4 shrink-0 mt-0.5 text-ucp-rojo" />
+                          <div className="flex-1">
+                            <div className="flex justify-between mb-1">
+                              <span className="font-medium text-gray-700">Cupos disponibles</span>
+                              <span className="font-semibold text-gray-900">
+                                {Math.max(0, product.cupos - (product.cuposOcupados ?? 0))}{" "}
+                                <span className="text-gray-400 font-normal">/ {product.cupos}</span>
+                              </span>
+                            </div>
+                            {/* Capacity bar */}
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div
+                                className="h-2 rounded-full transition-all"
+                                style={{
+                                  width: `${Math.min(100, ((product.cuposOcupados ?? 0) / product.cupos) * 100)}%`,
+                                  backgroundColor:
+                                    (product.cuposOcupados ?? 0) >= product.cupos
+                                      ? "#dc2626"
+                                      : (product.cuposOcupados ?? 0) / product.cupos > 0.8
+                                      ? "#f59e0b"
+                                      : "#16a34a",
+                                }}
+                              />
+                            </div>
+                            {(product.cuposOcupados ?? 0) >= product.cupos && (
+                              <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+                                <Ticket className="w-3 h-3" />
+                                Evento sin cupos disponibles
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {product.tipo === "CONVOCATORIA" && product.fechaLimite && (
+                  <>
+                    <Separator className="my-4" />
+                    <div className="space-y-2">
+                      <h2 className="font-semibold text-gray-900">Detalles de la convocatoria</h2>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <Clock className="w-4 h-4 shrink-0 text-ucp-rojo" />
+                        <span>
+                          <span className="font-medium">Fecha límite:</span>{" "}
+                          {formatDate(product.fechaLimite)}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <Separator className="my-4" />
 
