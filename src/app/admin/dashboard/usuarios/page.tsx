@@ -6,7 +6,7 @@ import {
   Search, Plus, Users, UserCheck, UserX, Building2,
   GraduationCap, Pencil, Lock, Unlock, Eye,
   Loader2, AlertCircle, ChevronLeft, ChevronRight,
-  Shield, Phone, BookOpen, X,
+  Shield, Phone, BookOpen, X, AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,16 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -100,15 +110,9 @@ function EstadoBadge({ bloqueado, verificado }: { bloqueado: boolean; verificado
 }
 
 function StatCard({
-  icon: Icon,
-  label,
-  value,
-  color,
+  icon: Icon, label, value, color,
 }: {
-  icon: React.ElementType;
-  label: string;
-  value: number;
-  color: string;
+  icon: React.ElementType; label: string; value: number; color: string;
 }) {
   return (
     <Card className="border-0 shadow-sm">
@@ -122,6 +126,85 @@ function StatCard({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// ── Bloqueo Confirmation Dialog ───────────────────────────────────────────────
+
+interface BloqueoDialogProps {
+  usuario: UsuarioItem | null;
+  loading: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function BloqueoDialog({ usuario, loading, onConfirm, onCancel }: BloqueoDialogProps) {
+  if (!usuario) return null;
+  const accion = usuario.bloqueado ? "Desbloquear" : "Bloquear";
+  const esBloquear = !usuario.bloqueado;
+
+  return (
+    <AlertDialog open={!!usuario} onOpenChange={(open) => !open && onCancel()}>
+      <AlertDialogContent className="max-w-md rounded-2xl bg-white">
+        <AlertDialogHeader>
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 ${
+            esBloquear ? "bg-red-100" : "bg-emerald-100"
+          }`}>
+            {esBloquear
+              ? <Lock className="w-6 h-6 text-red-600" />
+              : <Unlock className="w-6 h-6 text-emerald-600" />}
+          </div>
+          <AlertDialogTitle className="text-center text-lg font-bold text-gray-900">
+            ¿{accion} a {usuario.nombre}?
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-center text-sm text-gray-600">
+            {esBloquear
+              ? "El usuario perderá acceso completo al marketplace. No podrá iniciar sesión ni interactuar con publicaciones."
+              : "El usuario recuperará acceso completo al marketplace y podrá iniciar sesión nuevamente."}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <div className={`mx-4 my-1 rounded-xl px-4 py-3 text-sm ${
+          esBloquear
+            ? "bg-red-50 border border-red-100 text-red-700"
+            : "bg-emerald-50 border border-emerald-100 text-emerald-700"
+        }`}>
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>
+              {esBloquear
+                ? "Esta acción se puede revertir en cualquier momento."
+                : "El usuario podrá publicar y enviar mensajes de nuevo."}
+            </span>
+          </div>
+        </div>
+
+        <AlertDialogFooter className="gap-2 mt-2">
+          <AlertDialogCancel
+            onClick={onCancel}
+            disabled={loading}
+            className="rounded-xl"
+          >
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            disabled={loading}
+            className={`rounded-xl ${
+              esBloquear
+                ? "bg-red-600 hover:bg-red-700 text-white focus:ring-red-500"
+                : "bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-emerald-500"
+            }`}
+          >
+            {loading ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{accion}ndo...</>
+            ) : (
+              accion
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -140,7 +223,6 @@ function UsuarioModal({ mode, usuario, open, onClose, onSuccess }: UsuarioModalP
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [submitting, setSubmitting] = useState(false);
 
-  // Pre-rellenar en modo edición
   useEffect(() => {
     if (mode === "edit" && usuario) {
       setForm({
@@ -200,11 +282,9 @@ function UsuarioModal({ mode, usuario, open, onClose, onSuccess }: UsuarioModalP
         payload.bloqueado = form.bloqueado;
       }
 
-      const url =
-        mode === "create" ? "/api/admin/usuarios" : "/api/admin/usuarios";
       const method = mode === "create" ? "POST" : "PATCH";
 
-      const res = await fetch(url, {
+      const res = await fetch("/api/admin/usuarios", {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -243,7 +323,8 @@ function UsuarioModal({ mode, usuario, open, onClose, onSuccess }: UsuarioModalP
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-lg rounded-2xl bg-white">
+      {/* aria-describedby={undefined} suprime el warning de Radix cuando no hay DialogDescription */}
+      <DialogContent aria-describedby={undefined} className="max-w-lg rounded-2xl bg-white">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-gray-900">
             {mode === "create" ? "Crear nuevo usuario" : `Editar: ${usuario?.nombre}`}
@@ -296,9 +377,7 @@ function UsuarioModal({ mode, usuario, open, onClose, onSuccess }: UsuarioModalP
                 onChange={(e) => set("contrasena")(e.target.value)}
                 className={errors.contrasena ? "border-red-400" : ""}
               />
-              {errors.contrasena && (
-                <p className="text-xs text-red-500">{errors.contrasena}</p>
-              )}
+              {errors.contrasena && <p className="text-xs text-red-500">{errors.contrasena}</p>}
             </div>
           )}
 
@@ -425,7 +504,7 @@ export default function AdminUsuariosPage() {
   const [stats, setStats] = useState<Stats>({ total: 0, bloqueados: 0, verificados: 0, estudiantes: 0, aliados: 0 });
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 15, total: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -435,6 +514,9 @@ export default function AdminUsuariosPage() {
   // Modals
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<UsuarioItem | null>(null);
+
+  // Bloqueo confirmation (AlertDialog)
+  const [bloqueoTarget, setBloqueoTarget] = useState<UsuarioItem | null>(null);
 
   // ── Fetch ───────────────────────────────────────────────────────────────────
 
@@ -467,46 +549,42 @@ export default function AdminUsuariosPage() {
     return () => clearTimeout(t);
   }, [fetchUsuarios, search]);
 
-  // ── Actions ─────────────────────────────────────────────────────────────────
+  // ── Bloqueo / Desbloqueo ────────────────────────────────────────────────────
 
-  function confirmToggleBloqueo(u: UsuarioItem) {
-    const accion = u.bloqueado ? "desbloquear" : "bloquear";
-    const label = u.bloqueado ? "Desbloquear" : "Bloquear";
-    toast(`¿${label} a ${u.nombre}?`, {
-      description: u.bloqueado
-        ? "El usuario recuperará acceso al marketplace."
-        : "El usuario perderá acceso al marketplace.",
-      action: {
-        label,
-        onClick: () => doToggleBloqueo(u),
-      },
-      cancel: { label: "Cancelar", onClick: () => {} },
-      duration: 8000,
-    });
-  }
-
-  async function doToggleBloqueo(u: UsuarioItem) {
-    setActionLoading(u.id);
+  async function doToggleBloqueo() {
+    if (!bloqueoTarget) return;
+    setActionLoading(true);
     try {
       const res = await fetch("/api/admin/usuarios", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: u.id, bloqueado: !u.bloqueado }),
+        body: JSON.stringify({ id: bloqueoTarget.id, bloqueado: !bloqueoTarget.bloqueado }),
       });
       if (!res.ok) throw new Error();
       const updated: UsuarioItem = await res.json();
       setUsuarios((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-      toast.success(updated.bloqueado ? "Usuario bloqueado" : "Usuario desbloqueado");
+      // Actualizar stats
+      setStats((s) => ({
+        ...s,
+        bloqueados: updated.bloqueado ? s.bloqueados + 1 : Math.max(0, s.bloqueados - 1),
+      }));
+      toast.success(updated.bloqueado ? `${updated.nombre} fue bloqueado` : `${updated.nombre} fue desbloqueado`);
     } catch {
       toast.error("Error al actualizar el usuario");
     } finally {
-      setActionLoading(null);
+      setActionLoading(false);
+      setBloqueoTarget(null);
     }
   }
 
   function handleCreateSuccess(u: UsuarioItem) {
     setUsuarios((prev) => [u, ...prev]);
-    setStats((s) => ({ ...s, total: s.total + 1, estudiantes: u.rol === "ESTUDIANTE" ? s.estudiantes + 1 : s.estudiantes, aliados: u.rol === "ALIADO" ? s.aliados + 1 : s.aliados }));
+    setStats((s) => ({
+      ...s,
+      total: s.total + 1,
+      estudiantes: u.rol === "ESTUDIANTE" ? s.estudiantes + 1 : s.estudiantes,
+      aliados: u.rol === "ALIADO" ? s.aliados + 1 : s.aliados,
+    }));
   }
 
   function handleEditSuccess(u: UsuarioItem) {
@@ -536,18 +614,17 @@ export default function AdminUsuariosPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <StatCard icon={Users}        label="Total usuarios"  value={stats.total}       color="bg-slate-100 text-slate-600" />
-        <StatCard icon={GraduationCap} label="Estudiantes"    value={stats.estudiantes} color="bg-emerald-100 text-emerald-600" />
-        <StatCard icon={Building2}    label="Aliados"         value={stats.aliados}     color="bg-blue-100 text-blue-600" />
-        <StatCard icon={UserCheck}    label="Verificados"     value={stats.verificados} color="bg-violet-100 text-violet-600" />
-        <StatCard icon={UserX}        label="Bloqueados"      value={stats.bloqueados}  color="bg-red-100 text-red-600" />
+        <StatCard icon={Users}         label="Total usuarios"  value={stats.total}       color="bg-slate-100 text-slate-600" />
+        <StatCard icon={GraduationCap} label="Estudiantes"     value={stats.estudiantes} color="bg-emerald-100 text-emerald-600" />
+        <StatCard icon={Building2}     label="Aliados"         value={stats.aliados}     color="bg-blue-100 text-blue-600" />
+        <StatCard icon={UserCheck}     label="Verificados"     value={stats.verificados} color="bg-violet-100 text-violet-600" />
+        <StatCard icon={UserX}         label="Bloqueados"      value={stats.bloqueados}  color="bg-red-100 text-red-600" />
       </div>
 
       {/* Filters */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
@@ -566,7 +643,6 @@ export default function AdminUsuariosPage() {
               )}
             </div>
 
-            {/* Rol filter */}
             <Select value={filterRol} onValueChange={setFilterRol}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Rol" />
@@ -579,7 +655,6 @@ export default function AdminUsuariosPage() {
               </SelectContent>
             </Select>
 
-            {/* Estado filter */}
             <Select value={filterEstado} onValueChange={setFilterEstado}>
               <SelectTrigger className="w-44">
                 <SelectValue placeholder="Estado" />
@@ -595,7 +670,7 @@ export default function AdminUsuariosPage() {
         </CardContent>
       </Card>
 
-      {/* Results header */}
+      {/* Results info */}
       {!loading && (
         <div className="flex items-center justify-between text-sm text-gray-500">
           <span>
@@ -706,21 +781,12 @@ export default function AdminUsuariosPage() {
                             ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
                             : ""
                         }`}
-                        onClick={() => confirmToggleBloqueo(u)}
-                        disabled={actionLoading === u.id}
+                        onClick={() => setBloqueoTarget(u)}
                       >
-                        {actionLoading === u.id ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : u.bloqueado ? (
-                          <>
-                            <Unlock className="w-3.5 h-3.5" />
-                            Desbloquear
-                          </>
+                        {u.bloqueado ? (
+                          <><Unlock className="w-3.5 h-3.5" />Desbloquear</>
                         ) : (
-                          <>
-                            <Lock className="w-3.5 h-3.5" />
-                            Bloquear
-                          </>
+                          <><Lock className="w-3.5 h-3.5" />Bloquear</>
                         )}
                       </Button>
                     )}
@@ -770,9 +836,7 @@ export default function AdminUsuariosPage() {
                 </button>
               );
             })}
-            {pagination.totalPages > 5 && (
-              <span className="text-gray-400 px-1">...</span>
-            )}
+            {pagination.totalPages > 5 && <span className="text-gray-400 px-1">...</span>}
           </div>
 
           <Button
@@ -788,7 +852,9 @@ export default function AdminUsuariosPage() {
         </div>
       )}
 
-      {/* Create Modal */}
+      {/* ── Modals ──────────────────────────────────────────────────────────── */}
+
+      {/* Create */}
       <UsuarioModal
         mode="create"
         open={createOpen}
@@ -796,13 +862,21 @@ export default function AdminUsuariosPage() {
         onSuccess={handleCreateSuccess}
       />
 
-      {/* Edit Modal */}
+      {/* Edit */}
       <UsuarioModal
         mode="edit"
         usuario={editTarget}
         open={!!editTarget}
         onClose={() => setEditTarget(null)}
         onSuccess={handleEditSuccess}
+      />
+
+      {/* Bloqueo / Desbloqueo — AlertDialog central */}
+      <BloqueoDialog
+        usuario={bloqueoTarget}
+        loading={actionLoading}
+        onConfirm={doToggleBloqueo}
+        onCancel={() => setBloqueoTarget(null)}
       />
     </div>
   );

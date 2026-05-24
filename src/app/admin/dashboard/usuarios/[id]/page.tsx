@@ -193,7 +193,7 @@ function EditModal({ usuario, open, onClose, onSuccess }: EditModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-lg rounded-2xl bg-white">
+      <DialogContent aria-describedby={undefined} className="max-w-lg rounded-2xl bg-white">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Editar usuario</DialogTitle>
         </DialogHeader>
