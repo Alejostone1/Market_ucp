@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: usuarioId } = params;
+    const { id: usuarioId } = await params;
 
     const carritoItems = await prisma.carritoItem.findMany({
       where: { usuarioId },

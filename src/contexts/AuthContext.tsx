@@ -12,6 +12,9 @@ interface Usuario {
   facultad?: string;
   semestre?: number;
   avatarUrl?: string;
+  telefono?: string;
+  bloqueado?: boolean;
+  verificado?: boolean;
 }
 
 interface AuthContextType {
@@ -99,17 +102,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await response.json();
         setUsuario(data.usuario);
         localStorage.setItem("usuario", JSON.stringify(data.usuario));
-        
+
         // Guardar en cookie para middleware
         document.cookie = `usuario=${encodeURIComponent(JSON.stringify(data.usuario))}; path=/; max-age=604800`;
-        
+
         // Retornar el usuario para que el componente maneje la redirección
         toast.success("Inicio de sesión exitoso");
         return data.usuario;
       } else {
-        const error = await response.json();
-        toast.error(error.message || "Error al iniciar sesión");
-        throw new Error(error.message);
+        const errorData = await response.json();
+        const message = errorData.message || "Error al iniciar sesión";
+
+        // Solo mostrar toast genérico para errores que no son de cuenta bloqueada
+        // (los errores 403 de bloqueado se muestran con UI dedicada en el formulario)
+        if (response.status !== 403) {
+          toast.error(message);
+        }
+
+        // Lanzar error tipado con el status HTTP para que el componente reaccione
+        const err = new Error(message) as Error & { status: number };
+        err.status = response.status;
+        throw err;
       }
     } catch (error) {
       throw error;

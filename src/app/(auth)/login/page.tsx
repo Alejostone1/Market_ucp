@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Eye, EyeOff, Mail, Lock, ArrowRight,
-  ShieldCheck, Zap, Package,
+  ShieldCheck, Zap, Package, ShieldX,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -33,17 +33,25 @@ export default function LoginPage() {
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [blockedError, setBlockedError] = useState<string | null>(null);
   const router = useRouter();
   const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    setBlockedError(null);
     try {
       const usuarioLogueado = await login(email, password);
       router.push(getRolRedirect(usuarioLogueado?.rol));
-    } catch {
-      /* Error mostrado como toast en AuthContext */
+    } catch (err: unknown) {
+      // Si el error es 403 (cuenta bloqueada o no verificada) mostramos UI dedicada
+      const status = (err as Error & { status?: number })?.status;
+      if (status === 403) {
+        const message = (err as Error).message;
+        setBlockedError(message);
+      }
+      // Los demás errores (401 credenciales) ya los mostró el toast en AuthContext
     } finally {
       setIsLoading(false);
     }
@@ -239,6 +247,40 @@ export default function LoginPage() {
             Ingresa con tu cuenta institucional UCP
           </p>
 
+          {/* Banner cuenta bloqueada / no verificada */}
+          <AnimatePresence>
+            {blockedError && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                transition={{ duration: 0.25 }}
+                className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 flex gap-3"
+              >
+                <div className="shrink-0 w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
+                  <ShieldX className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-red-800 leading-tight mb-0.5">
+                    Acceso restringido
+                  </p>
+                  <p className="text-xs text-red-700 leading-relaxed">
+                    {blockedError}
+                  </p>
+                  <p className="text-xs text-red-600 mt-1.5 font-medium">
+                    ¿Necesitas ayuda? Escríbenos a{" "}
+                    <a
+                      href="mailto:admin@ucp.edu.co"
+                      className="underline underline-offset-2 hover:text-red-800"
+                    >
+                      admin@ucp.edu.co
+                    </a>
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Correo */}
             <div>
@@ -250,7 +292,7 @@ export default function LoginPage() {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => { setEmail(e.target.value); setBlockedError(null); }}
                   placeholder="nombre@ucp.edu.co"
                   required
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#881a1d] focus:ring-2 focus:ring-[#881a1d]/10 transition-all text-sm bg-gray-50 hover:bg-white focus:bg-white placeholder:text-gray-400"

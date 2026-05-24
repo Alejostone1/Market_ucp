@@ -68,11 +68,16 @@ export async function PATCH(
         const bytes = await medio.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
+        // Mapear MIME type al enum TipoMedio
+        const tipoMedio = medio.type.startsWith('video/') ? 'VIDEO'
+          : medio.type.startsWith('image/') ? 'IMAGEN'
+          : 'ARCHIVO';
+
         await prisma.medio.create({
           data: {
             publicacionId: publicationId,
             url: `/uploads/${Date.now()}-${medio.name}`,
-            tipo: medio.type,
+            tipo: tipoMedio as import('@prisma/client').TipoMedio,
             orden: i,
           },
         });

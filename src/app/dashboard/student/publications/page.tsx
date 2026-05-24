@@ -31,6 +31,7 @@ interface Publicacion {
   estado: string;
   precio: number | null;
   tipoPrecio: string | null;
+  vistas: number;
   categoria: {
     nombre: string;
   };

@@ -1,55 +1,62 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-
 export async function GET() {
   try {
-    // Obtener estadísticas generales
     const [
       totalPublicaciones,
       publicacionesPendientes,
       usuariosActivos,
       reportesPendientes,
+      // Publicaciones por tipo (conteos individuales)
+      totalProductos,
+      totalServicios,
+      totalEventos,
+      totalConvocatorias,
+      // Publicaciones por estado (conteos individuales)
+      totalAprobadas,
+      totalRechazadas,
+      totalArchivadas,
+      totalSuspendidas,
     ] = await Promise.all([
       prisma.publicacion.count(),
       prisma.publicacion.count({ where: { estado: 'PENDIENTE' } }),
       prisma.usuario.count({ where: { rol: { in: ['ESTUDIANTE', 'ALIADO'] } } }),
       prisma.reporte.count({ where: { estado: 'PENDIENTE' } }),
+      // Por tipo
+      prisma.publicacion.count({ where: { tipo: 'PRODUCTO' } }),
+      prisma.publicacion.count({ where: { tipo: 'SERVICIO' } }),
+      prisma.publicacion.count({ where: { tipo: 'EVENTO' } }),
+      prisma.publicacion.count({ where: { tipo: 'CONVOCATORIA' } }),
+      // Por estado
+      prisma.publicacion.count({ where: { estado: 'APROBADA' } }),
+      prisma.publicacion.count({ where: { estado: 'RECHAZADA' } }),
+      prisma.publicacion.count({ where: { estado: 'ARCHIVADA' } }),
+      prisma.publicacion.count({ where: { estado: 'SUSPENDIDA' } }),
     ]);
 
-    // Obtener publicaciones por tipo
-    const publicacionesPorTipo = await prisma.publicacion.groupBy({
-      by: ['tipo'],
-      _count: { id: true },
-    }) as any[];
+    const publicacionesPorTipoFormatted = [
+      { tipo: 'PRODUCTO',     count: totalProductos },
+      { tipo: 'SERVICIO',     count: totalServicios },
+      { tipo: 'EVENTO',       count: totalEventos },
+      { tipo: 'CONVOCATORIA', count: totalConvocatorias },
+    ].filter((i) => i.count > 0);
 
-    const publicacionesPorTipoFormatted = publicacionesPorTipo.map((item) => ({
-      tipo: item.tipo,
-      count: item._count.id,
-    }));
+    const publicacionesPorEstadoFormatted = [
+      { estado: 'PENDIENTE',  count: publicacionesPendientes },
+      { estado: 'APROBADA',   count: totalAprobadas },
+      { estado: 'RECHAZADA',  count: totalRechazadas },
+      { estado: 'ARCHIVADA',  count: totalArchivadas },
+      { estado: 'SUSPENDIDA', count: totalSuspendidas },
+    ].filter((i) => i.count > 0);
 
-    // Obtener publicaciones por estado
-    const publicacionesPorEstado = await prisma.publicacion.groupBy({
-      by: ['estado'],
-      _count: { id: true },
-    }) as any[];
-
-    const publicacionesPorEstadoFormatted = publicacionesPorEstado.map((item) => ({
-      estado: item.estado,
-      count: item._count.id,
-    }));
-
-    // Obtener actividad reciente (historial)
+    // Actividad reciente (historial moderación)
     const actividadReciente = await prisma.historialPublicacion.findMany({
       take: 10,
       orderBy: { creadoEn: 'desc' },
       include: {
-        publicacion: {
-          select: { titulo: true },
-        },
-        admin: {
-          select: { nombre: true },
-        },
+        publicacion: { select: { titulo: true } },
+        admin:       { select: { nombre: true } },
       },
     });
 
@@ -57,7 +64,7 @@ export async function GET() {
       id: item.id,
       accion: `Cambio de ${item.estadoAnterior} a ${item.estadoNuevo}`,
       publicacionTitulo: item.publicacion.titulo,
-      adminNombre: item.admin.nombre,
+      adminNombre: item.admin?.nombre ?? 'Sistema',   // admin puede ser null (moderación automática)
       fecha: item.creadoEn,
     }));
 
@@ -68,9 +75,9 @@ export async function GET() {
         usuariosActivos,
         reportesPendientes,
       },
-      publicacionesPorTipo: publicacionesPorTipoFormatted,
+      publicacionesPorTipo:   publicacionesPorTipoFormatted,
       publicacionesPorEstado: publicacionesPorEstadoFormatted,
-      actividadReciente: actividadRecienteFormatted,
+      actividadReciente:      actividadRecienteFormatted,
     });
   } catch (error) {
     console.error('Error al obtener estadísticas del dashboard:', error);
