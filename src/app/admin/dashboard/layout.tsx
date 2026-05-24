@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, FileText, Users, AlertTriangle,
-  Tag, Bell, Home, MessageSquare,
+  Tag, Bell, Home, MessageSquare, History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +51,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     { title: "Categorías",     href: "/admin/dashboard/categorias",    icon: Tag,             badge: 0 },
     { title: "Notificaciones", href: "/admin/dashboard/notificaciones",icon: Bell,            badge: 0 },
     { title: "Mensajes",       href: "/admin/dashboard/messages",      icon: MessageSquare,   badge: unreadMessages },
+    { title: "Historial",      href: "/admin/dashboard/historial",     icon: History,         badge: 0 },
   ];
 
   return (
