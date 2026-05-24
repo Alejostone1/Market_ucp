@@ -139,7 +139,8 @@ export function ReportModal({ publicacion, open, onClose }: ReportModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && resetAndClose()}>
-      <DialogContent className="max-w-md w-[calc(100%-2rem)] md:w-full p-0 overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border border-gray-150 dark:border-zinc-800 shadow-2xl flex flex-col max-h-[90vh]">
+      <DialogContent aria-describedby={undefined} className="max-w-md w-[calc(100%-2rem)] md:w-full p-0 overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border border-gray-150 dark:border-zinc-800 shadow-2xl flex flex-col max-h-[90vh]">
+        <DialogTitle className="sr-only">Reportar publicación</DialogTitle>
         <AnimatePresence mode="wait">
           {/* ── No autenticado (Auth Gate) ── */}
           {!isAuthenticated ? (
@@ -192,10 +193,10 @@ export function ReportModal({ publicacion, open, onClose }: ReportModalProps) {
                   className="flex flex-col flex-1 overflow-hidden"
                 >
                   <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-zinc-800/80 shrink-0">
-                    <DialogTitle className="flex items-center gap-2.5 text-lg font-bold text-gray-900 dark:text-zinc-100">
+                    <div className="flex items-center gap-2.5 text-lg font-bold text-gray-900 dark:text-zinc-100">
                       <Flag className="w-5 h-5 text-[#881a1d] dark:text-red-500" />
                       Reportar publicación
-                    </DialogTitle>
+                    </div>
                   </DialogHeader>
 
                   {/* Scrollable Body */}
