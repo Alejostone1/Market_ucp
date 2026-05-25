@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Eye, EyeOff, Mail, Lock, User, ArrowRight,
   GraduationCap, Building2, Info, CheckCircle2, AlertCircle, Clock,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -18,45 +19,125 @@ const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
 // ── Página ────────────────────────────────────────────────────────────────────
 
 export default function RegisterPage() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading,    setIsLoading]    = useState(false);
-  const [rol,          setRol]          = useState<"ESTUDIANTE" | "ALIADO">("ESTUDIANTE");
-  const [email,        setEmail]        = useState("");
+  const [showPassword, setShowPassword]   = useState(false);
+  const [isLoading,    setIsLoading]      = useState(false);
+  const [rol,          setRol]            = useState<"ESTUDIANTE" | "ALIADO">("ESTUDIANTE");
+  const [email,        setEmail]          = useState("");
+
+  // Estado de verificación de correo duplicado
+  const [emailExists,      setEmailExists]      = useState<boolean | null>(null);
+  const [checkingEmail,    setCheckingEmail]    = useState(false);
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
 
-  // Derivaciones de estado
-  const emailTyped = email.includes("@");
-  const ucpEmail   = isUcpEmail(email);
-
-  // La advertencia de dominio UCP solo aplica a ESTUDIANTE
+  // ── Derivaciones de estado ────────────────────────────────────────────────
+  const emailTyped       = email.includes("@");
+  const ucpEmail         = isUcpEmail(email);
   const showEmailWarning = rol === "ESTUDIANTE" && emailTyped && !ucpEmail;
 
-  // Clases del campo email — solo ESTUDIANTE recibe feedback de dominio
-  const emailBorderClass =
-    rol === "ESTUDIANTE" && emailTyped
-      ? ucpEmail
-        ? "border-green-400 focus:border-green-500 focus:ring-green-500/10"
-        : "border-amber-400 focus:border-amber-500 focus:ring-amber-500/10"
-      : "border-gray-200 focus:border-[#881a1d] focus:ring-[#881a1d]/10";
+  // ── Verificación de correo en tiempo real (debounced 600ms) ──────────────
+  useEffect(() => {
+    // Cancelar debounce anterior
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setEmailExists(null);
 
+    // No verificar si aún no hay @
+    if (!emailTyped) return;
+
+    // Para ESTUDIANTE solo verificar existencia si ya es UCP (evitar ruido)
+    if (rol === "ESTUDIANTE" && !ucpEmail) return;
+
+    // Para ALIADO verificar solo si tiene formato válido
+    if (rol === "ALIADO" && !isValidEmail(email)) return;
+
+    debounceRef.current = setTimeout(async () => {
+      setCheckingEmail(true);
+      try {
+        const res  = await fetch(
+          `/api/auth/check-email?correo=${encodeURIComponent(email.toLowerCase().trim())}`
+        );
+        const data = await res.json();
+        setEmailExists(data.exists ?? false);
+      } catch {
+        setEmailExists(null);
+      } finally {
+        setCheckingEmail(false);
+      }
+    }, 600);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email, rol]);
+
+  // ── Cambio de rol ─────────────────────────────────────────────────────────
   const handleRolChange = (nuevoRol: "ESTUDIANTE" | "ALIADO") => {
     setRol(nuevoRol);
-    // Resetear email para evitar estados visuales confusos entre roles
     setEmail("");
+    setEmailExists(null);
+    setCheckingEmail(false);
   };
 
+  // ── Clases del campo email ─────────────────────────────────────────────────
+  const emailBorderClass = (() => {
+    if (!emailTyped) return "border-gray-200 focus:border-[#881a1d] focus:ring-[#881a1d]/10";
+    if (emailExists === true) return "border-red-400 focus:border-red-500 focus:ring-red-500/10";
+    if (rol === "ESTUDIANTE") {
+      return ucpEmail
+        ? "border-green-400 focus:border-green-500 focus:ring-green-500/10"
+        : "border-amber-400 focus:border-amber-500 focus:ring-amber-500/10";
+    }
+    // ALIADO — neutral hasta que se confirme
+    return "border-gray-200 focus:border-[#881a1d] focus:ring-[#881a1d]/10";
+  })();
+
+  // ── Ícono dentro del campo email ──────────────────────────────────────────
+  const EmailIcon = () => {
+    if (!emailTyped) return null;
+    if (checkingEmail) {
+      return (
+        <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+          <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+        </div>
+      );
+    }
+    if (emailExists === true) {
+      return (
+        <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+          <AlertCircle className="w-4 h-4 text-red-500" />
+        </div>
+      );
+    }
+    if (rol === "ESTUDIANTE") {
+      return (
+        <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+          {ucpEmail
+            ? <CheckCircle2 className="w-4 h-4 text-green-500" />
+            : <AlertCircle  className="w-4 h-4 text-amber-500" />
+          }
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Validación frontend: correo UCP solo para ESTUDIANTE
+    // Guardas frontend
     if (rol === "ESTUDIANTE" && !isUcpEmail(email)) {
       toast.error("Los estudiantes deben usar un correo institucional @ucp.edu.co");
       return;
     }
-
-    // Validación básica de formato para ALIADO
     if (rol === "ALIADO" && !isValidEmail(email)) {
       toast.error("Ingresa un correo electrónico válido");
+      return;
+    }
+    if (emailExists === true) {
+      toast.error("Este correo ya está registrado. Intenta iniciar sesión.");
       return;
     }
 
@@ -83,13 +164,18 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        toast.error(data.message || "Error al crear la cuenta");
+        // 409 → correo duplicado — mostrar error inline además del toast
+        if (response.status === 409) {
+          setEmailExists(true);
+          toast.error("Este correo ya está registrado.");
+        } else {
+          toast.error(data.message || "Error al crear la cuenta");
+        }
         return;
       }
 
-      // ── Flujo post-registro según rol ────────────────────────────────────────
+      // ── Post-registro según rol ──────────────────────────────────────────
       if (rol === "ALIADO") {
-        // El aliado queda PENDIENTE — NO se inicia sesión automáticamente
         toast.success("¡Solicitud enviada! Tu cuenta está pendiente de aprobación.", {
           duration: 5000,
         });
@@ -97,7 +183,7 @@ export default function RegisterPage() {
         return;
       }
 
-      // ESTUDIANTE — cuenta activa de inmediato, iniciar sesión
+      // ESTUDIANTE — cuenta activa de inmediato
       const usuarioString = JSON.stringify(data.usuario);
       localStorage.setItem("usuario", usuarioString);
       document.cookie = `usuario=${encodeURIComponent(usuarioString)}; path=/; max-age=604800`;
@@ -111,13 +197,17 @@ export default function RegisterPage() {
     }
   };
 
-  // ── Textos dinámicos según rol ─────────────────────────────────────────────
-  const emailLabel       = rol === "ESTUDIANTE" ? "Correo institucional" : "Correo electrónico";
-  const emailPlaceholder = rol === "ESTUDIANTE" ? "nombre@ucp.edu.co"   : "tu@empresa.com";
+  // ── Textos dinámicos según rol ────────────────────────────────────────────
+  const emailLabel       = rol === "ESTUDIANTE" ? "Correo institucional"        : "Correo electrónico";
+  const emailPlaceholder = rol === "ESTUDIANTE" ? "nombre@ucp.edu.co"           : "tu@empresa.com";
   const subtitle         = rol === "ESTUDIANTE"
     ? "Regístrate con tu correo institucional @ucp.edu.co"
     : "Regístrate con cualquier correo electrónico válido";
 
+  // Botón deshabilitado si hay advertencia de dominio o correo ya existe
+  const submitDisabled = isLoading || showEmailWarning || emailExists === true || checkingEmail;
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
 
@@ -129,7 +219,6 @@ export default function RegisterPage() {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.55 }}
       >
-        {/* Decoraciones */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/5 rounded-full -translate-y-1/3 translate-x-1/4" />
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/10 rounded-full translate-y-1/3 -translate-x-1/3" />
@@ -143,7 +232,6 @@ export default function RegisterPage() {
         </div>
 
         <div className="relative z-10 flex flex-col h-full p-12">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group w-fit">
             <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
               <span className="text-[#881a1d] font-black text-sm leading-none">UCP</span>
@@ -176,7 +264,6 @@ export default function RegisterPage() {
               Universidad Católica de Pereira.
             </motion.p>
 
-            {/* Selector de roles desktop */}
             <motion.div
               className="space-y-3"
               initial={{ opacity: 0, y: 15 }}
@@ -187,7 +274,6 @@ export default function RegisterPage() {
                 Elige tu rol
               </p>
 
-              {/* Estudiante */}
               <div
                 className={`p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${
                   rol === "ESTUDIANTE"
@@ -209,7 +295,6 @@ export default function RegisterPage() {
                 </p>
               </div>
 
-              {/* Aliado */}
               <div
                 className={`p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${
                   rol === "ALIADO"
@@ -233,7 +318,7 @@ export default function RegisterPage() {
               </div>
             </motion.div>
 
-            {/* Info note — condicional según rol */}
+            {/* Info note condicional */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={rol}
@@ -274,7 +359,7 @@ export default function RegisterPage() {
       {/* ══ PANEL DERECHO — Formulario ══════════════════════════════════════ */}
       <div className="flex-1 flex flex-col bg-white overflow-y-auto">
 
-        {/* ── Banner móvil ──────────────────────────────────────────────────── */}
+        {/* ── Banner móvil ────────────────────────────────────────────────── */}
         <div
           className="lg:hidden relative overflow-hidden flex-shrink-0"
           style={{ background: "linear-gradient(140deg, #881a1d 0%, #9e2124 50%, #c55f23 100%)" }}
@@ -289,7 +374,6 @@ export default function RegisterPage() {
           <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3" />
 
           <div className="relative z-10 px-6 pt-10 pb-16 flex flex-col items-center text-center">
-            {/* Logo */}
             <Link href="/" className="flex flex-col items-center gap-2 mb-5">
               <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-xl">
                 <span className="text-[#881a1d] font-black text-base leading-none">UCP</span>
@@ -300,7 +384,6 @@ export default function RegisterPage() {
               </div>
             </Link>
 
-            {/* Selector de rol como chips (móvil) */}
             <div className="flex gap-2">
               {(["ESTUDIANTE", "ALIADO"] as const).map((r) => (
                 <button
@@ -338,7 +421,7 @@ export default function RegisterPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
 
-              {/* Nombre */}
+              {/* ── Nombre ──────────────────────────────────────────────── */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                   Nombre completo
@@ -355,7 +438,7 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Correo — comportamiento diferente según rol */}
+              {/* ── Correo ──────────────────────────────────────────────── */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                   {emailLabel}
@@ -366,26 +449,55 @@ export default function RegisterPage() {
                     name="email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      // Reset inmediato del estado de existencia al cambiar el correo
+                      if (emailExists !== null) setEmailExists(null);
+                    }}
                     placeholder={emailPlaceholder}
                     required
                     className={`w-full pl-10 pr-10 py-3 rounded-xl border transition-all text-sm bg-gray-50 hover:bg-white focus:bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 ${emailBorderClass}`}
                   />
-                  {/* Icono de validación — solo para ESTUDIANTE */}
-                  {rol === "ESTUDIANTE" && emailTyped && (
-                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                      {ucpEmail
-                        ? <CheckCircle2 className="w-4 h-4 text-green-500" />
-                        : <AlertCircle  className="w-4 h-4 text-amber-500" />
-                      }
-                    </div>
-                  )}
+                  <EmailIcon />
                 </div>
               </div>
 
-              {/* Alerta correo no UCP — SOLO para ESTUDIANTE */}
+              {/* ── Error: correo ya registrado ──────────────────────────── */}
               <AnimatePresence>
-                {showEmailWarning && (
+                {emailExists === true && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.22 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-3.5">
+                      <div className="flex items-start gap-2.5">
+                        <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-red-800 font-semibold text-sm mb-0.5">
+                            Este correo ya está registrado
+                          </p>
+                          <p className="text-red-700 text-xs leading-relaxed">
+                            Ya existe una cuenta con este correo electrónico.{" "}
+                            <Link
+                              href="/login"
+                              className="font-bold underline hover:text-red-800"
+                            >
+                              ¿Quieres iniciar sesión?
+                            </Link>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* ── Advertencia dominio UCP (solo ESTUDIANTE, solo si no hay error de existencia) */}
+              <AnimatePresence>
+                {showEmailWarning && emailExists !== true && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
@@ -393,14 +505,14 @@ export default function RegisterPage() {
                     transition={{ duration: 0.25 }}
                     className="overflow-hidden"
                   >
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-3.5">
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5">
                       <div className="flex items-start gap-2.5">
-                        <Info className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                        <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-red-800 font-semibold text-sm mb-0.5">
+                          <p className="text-amber-800 font-semibold text-sm mb-0.5">
                             Correo institucional requerido
                           </p>
-                          <p className="text-red-700 text-xs leading-relaxed">
+                          <p className="text-amber-700 text-xs leading-relaxed">
                             Los estudiantes solo pueden usar correos{" "}
                             <strong>@ucp.edu.co</strong>.
                           </p>
@@ -411,7 +523,7 @@ export default function RegisterPage() {
                 )}
               </AnimatePresence>
 
-              {/* Info aprobación — SOLO para ALIADO */}
+              {/* ── Info aprobación aliado ───────────────────────────────── */}
               <AnimatePresence>
                 {rol === "ALIADO" && (
                   <motion.div
@@ -439,7 +551,7 @@ export default function RegisterPage() {
                 )}
               </AnimatePresence>
 
-              {/* Contraseña */}
+              {/* ── Contraseña ──────────────────────────────────────────── */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                   Contraseña
@@ -468,7 +580,7 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Confirmar contraseña */}
+              {/* ── Confirmar contraseña ────────────────────────────────── */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                   Confirmar contraseña
@@ -485,10 +597,10 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Botón submit */}
+              {/* ── Botón submit ─────────────────────────────────────────── */}
               <motion.button
                 type="submit"
-                disabled={isLoading || showEmailWarning}
+                disabled={submitDisabled}
                 whileTap={{ scale: 0.98 }}
                 className="w-full bg-[#881a1d] hover:bg-[#6d1416] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-[#881a1d]/20 mt-2 cursor-pointer"
               >
@@ -513,7 +625,7 @@ export default function RegisterPage() {
               </Link>
             </p>
 
-            {/* Nota info — móvil, condicional según rol */}
+            {/* Nota info móvil — condicional */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={rol}
@@ -540,7 +652,8 @@ export default function RegisterPage() {
                   <>
                     <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <p className="text-gray-600 text-xs leading-relaxed">
-                      Como aliado puedes usar <strong className="text-gray-800">cualquier correo</strong>.
+                      Como aliado puedes usar{" "}
+                      <strong className="text-gray-800">cualquier correo</strong>.
                       Tu cuenta requiere aprobación del administrador.
                     </p>
                   </>
