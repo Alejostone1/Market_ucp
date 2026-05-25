@@ -22,18 +22,34 @@ export async function GET(request: Request) {
     };
 
     if (tipo && tipo !== 'all') {
-      where.tipo = tipo;
+      const tipos = tipo.split(',').map((t) => t.trim()).filter(Boolean);
+      if (tipos.length > 1) {
+        where.tipo = { in: tipos };
+      } else {
+        where.tipo = tipos[0];
+      }
     }
 
     if (categoria && categoria !== 'all') {
-      if (categoria.includes('-')) {
-        // Es un ID de categoría
-        where.categoriaId = categoria;
+      // Soporta: un ID, varios IDs separados por coma, o un slug
+      const cats = categoria.split(',').map((c) => c.trim()).filter(Boolean);
+
+      const esId = (s: string) =>
+        // cuid: ≥20 chars alfanumérico sin guiones (ej: clxxxxxxxxxxxxxxxxxxxxx)
+        // uuid: contiene guiones (ej: 550e8400-e29b-...)
+        s.includes('-') || (s.length >= 20 && /^[a-z0-9]+$/i.test(s));
+
+      if (cats.length > 1) {
+        // Múltiples categorías — siempre son IDs (desde /explore)
+        where.categoriaId = { in: cats };
       } else {
-        // Es un slug de categoría
-        where.categoria = {
-          slug: categoria,
-        };
+        const single = cats[0];
+        if (esId(single)) {
+          where.categoriaId = single;
+        } else {
+          // Es un slug (ej: "tecnologia", "libros")
+          where.categoria = { slug: single };
+        }
       }
     }
 
