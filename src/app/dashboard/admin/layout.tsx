@@ -13,6 +13,7 @@ import {
   Home,
   Shield,
   MessageSquare,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -67,6 +68,11 @@ const sidebarNavItems: SidebarItem[] = [
     href: "/dashboard/admin/messages",
     icon: MessageSquare,
     BadgeComp: UnreadMessagesBadge,
+  },
+  {
+    title: "Historial",
+    href: "/dashboard/admin/historial",
+    icon: History,
   },
 ];
 

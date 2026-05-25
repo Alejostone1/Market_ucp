@@ -2,32 +2,48 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Package, MessageSquare, User, LogOut, Search, ShoppingCart } from "lucide-react";
+import { Home, Package, MessageSquare, User, LogOut, Search, ShoppingCart, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-const navItems = [
-  { title: "Inicio", href: "/dashboard/student", icon: Home },
-  { title: "Mis Publicaciones", href: "/dashboard/student/publications", icon: Package },
-  { title: "Mensajes", href: "/dashboard/student/messages", icon: MessageSquare },
-  { title: "Perfil", href: "/dashboard/student/profile", icon: User },
-  { title: "Marketplace", href: "/dashboard/student/marketplace", icon: Search },
-  { title: "Carrito", href: "/dashboard/student/cart", icon: ShoppingCart },
+// navItems se construye dinámicamente para poder inyectar el badge de notificaciones
+const BASE_NAV = [
+  { title: "Inicio",            href: "/dashboard/student",               icon: Home },
+  { title: "Mis Publicaciones", href: "/dashboard/student/publications",  icon: Package },
+  { title: "Mensajes",          href: "/dashboard/student/messages",      icon: MessageSquare },
+  { title: "Notificaciones",    href: "/dashboard/student/notifications", icon: Bell },
+  { title: "Perfil",            href: "/dashboard/student/profile",       icon: User },
+  { title: "Marketplace",       href: "/dashboard/student/marketplace",   icon: Search },
+  { title: "Carrito",           href: "/dashboard/student/cart",          icon: ShoppingCart },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { usuario, logout, isLoading } = useAuth();
   const router = useRouter();
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
     if (!isLoading && usuario?.rol === "ADMIN") {
       router.push("/admin/dashboard");
     }
   }, [usuario, isLoading, router]);
+
+  // Polling de notificaciones no leídas cada 60 s
+  useEffect(() => {
+    const fetchUnread = () => {
+      fetch("/api/notificaciones?limit=1", { cache: "no-store" })
+        .then((r) => r.json())
+        .then((d) => setUnreadNotifications(d.unreadCount ?? 0))
+        .catch(() => {});
+    };
+    fetchUnread();
+    const id = setInterval(fetchUnread, 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const handleLogout = () => {
     toast("¿Cerrar sesión?", {
@@ -92,9 +108,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           <nav className="space-y-2">
-            {navItems.map((item) => {
+            {BASE_NAV.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+              const badge =
+                item.href === "/dashboard/student/notifications"
+                  ? unreadNotifications
+                  : 0;
               return (
                 <Link
                   key={item.href}
@@ -104,8 +124,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     isActive ? "bg-ucp-rojo text-white" : "text-gray-700 hover:bg-gray-100"
                   )}
                 >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.title}</span>
+                  <Icon className="w-5 h-5 shrink-0" />
+                  <span className="font-medium flex-1">{item.title}</span>
+                  {badge > 0 && (
+                    <span
+                      className={cn(
+                        "text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center",
+                        isActive
+                          ? "bg-white text-ucp-rojo"
+                          : "bg-ucp-rojo text-white"
+                      )}
+                    >
+                      {badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}

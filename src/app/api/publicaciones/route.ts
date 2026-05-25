@@ -12,7 +12,11 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '12');
     const skip = (page - 1) * limit;
-    
+
+    // Filtro de rango de precio
+    const minPrecio = searchParams.get('minPrecio');
+    const maxPrecio = searchParams.get('maxPrecio');
+
     const where: any = {
       estado: 'APROBADA',
     };
@@ -40,15 +44,24 @@ export async function GET(request: Request) {
       ];
     }
 
+    // Filtro de rango de precio (solo publicaciones con precio definido)
+    if (minPrecio || maxPrecio) {
+      where.precio = {};
+      if (minPrecio) where.precio.gte = parseFloat(minPrecio);
+      if (maxPrecio) where.precio.lte = parseFloat(maxPrecio);
+    }
+
     // Construir el ordenamiento
+    // Nota: nulls: 'last' coloca las publicaciones GRATIS (precio null) al final
+    // cuando se ordena por precio ascendente, y al principio en descendente.
     let orderBy: any = { creadoEn: 'desc' };
-    
+
     switch (sort) {
       case 'precio-asc':
-        orderBy = { precio: 'asc' };
+        orderBy = { precio: { sort: 'asc', nulls: 'last' } };
         break;
       case 'precio-desc':
-        orderBy = { precio: 'desc' };
+        orderBy = { precio: { sort: 'desc', nulls: 'last' } };
         break;
       case 'populares':
         orderBy = { vistas: 'desc' };

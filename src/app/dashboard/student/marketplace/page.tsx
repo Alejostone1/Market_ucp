@@ -68,6 +68,8 @@ export default function MarketplacePage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState<any>(null);
+  const [minPrecio, setMinPrecio] = useState<string>("");
+  const [maxPrecio, setMaxPrecio] = useState<string>("");
 
   useEffect(() => {
     fetchPublicaciones();
@@ -77,13 +79,13 @@ export default function MarketplacePage() {
   useEffect(() => {
     // Reset a página 1 cuando cambian los filtros
     setCurrentPage(1);
-    
+
     const delayedSearch = setTimeout(() => {
       fetchPublicaciones();
     }, 300);
 
     return () => clearTimeout(delayedSearch);
-  }, [searchQuery, selectedCategoria, selectedTipo, sortBy]);
+  }, [searchQuery, selectedCategoria, selectedTipo, sortBy, minPrecio, maxPrecio]);
 
   useEffect(() => {
     fetchPublicaciones();
@@ -98,6 +100,8 @@ export default function MarketplacePage() {
         ...(selectedCategoria && { categoria: selectedCategoria }),
         ...(selectedTipo && { tipo: selectedTipo }),
         ...(sortBy && { sort: sortBy }),
+        ...(minPrecio && { minPrecio }),
+        ...(maxPrecio && { maxPrecio }),
         page: currentPage.toString(),
         limit: '6',
       });
@@ -287,7 +291,7 @@ export default function MarketplacePage() {
       <Card className="border-0 shadow-lg rounded-xl p-6 mb-8">
         <div className="grid md:grid-cols-12 gap-4">
           {/* Búsqueda */}
-          <div className="md:col-span-5">
+          <div className="md:col-span-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
@@ -301,9 +305,9 @@ export default function MarketplacePage() {
           </div>
 
           {/* Categoría */}
-          <div className="md:col-span-3">
+          <div className="md:col-span-2">
             <select
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucp-rojo"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucp-rojo text-sm"
               value={selectedCategoria}
               onChange={(e) => setSelectedCategoria(e.target.value)}
             >
@@ -319,7 +323,7 @@ export default function MarketplacePage() {
           {/* Tipo */}
           <div className="md:col-span-2">
             <select
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucp-rojo"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucp-rojo text-sm"
               value={selectedTipo}
               onChange={(e) => setSelectedTipo(e.target.value)}
             >
@@ -334,7 +338,7 @@ export default function MarketplacePage() {
           {/* Ordenar */}
           <div className="md:col-span-2">
             <select
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucp-rojo"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucp-rojo text-sm"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
             >
@@ -344,7 +348,47 @@ export default function MarketplacePage() {
               <option value="populares">Más populares</option>
             </select>
           </div>
+
+          {/* Rango de precio */}
+          <div className="md:col-span-2 flex items-center gap-1">
+            <Input
+              type="number"
+              placeholder="Min $"
+              min={0}
+              className="rounded-lg text-sm h-[38px] px-2"
+              value={minPrecio}
+              onChange={(e) => setMinPrecio(e.target.value)}
+            />
+            <span className="text-gray-400 text-xs shrink-0">—</span>
+            <Input
+              type="number"
+              placeholder="Max $"
+              min={0}
+              className="rounded-lg text-sm h-[38px] px-2"
+              value={maxPrecio}
+              onChange={(e) => setMaxPrecio(e.target.value)}
+            />
+          </div>
         </div>
+
+        {/* Limpiar filtros */}
+        {(searchQuery || selectedCategoria || selectedTipo || sortBy !== "recientes" || minPrecio || maxPrecio) && (
+          <div className="mt-3 flex justify-end">
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedCategoria("");
+                setSelectedTipo("");
+                setSortBy("recientes");
+                setMinPrecio("");
+                setMaxPrecio("");
+              }}
+              className="text-xs text-ucp-rojo hover:underline"
+            >
+              Limpiar todos los filtros
+            </button>
+          </div>
+        )}
       </Card>
 
       {/* Resultados */}
@@ -361,6 +405,8 @@ export default function MarketplacePage() {
               setSelectedCategoria("");
               setSelectedTipo("");
               setSortBy("recientes");
+              setMinPrecio("");
+              setMaxPrecio("");
             }}
             className="bg-ucp-rojo text-white hover:bg-red-700 rounded-full"
           >

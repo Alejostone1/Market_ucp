@@ -27,6 +27,7 @@ import {
   ShieldCheck,
   ShieldAlert,
   PauseCircle,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -203,6 +204,9 @@ export default function AdminReportesPage() {
   const [accion, setAccion]                   = useState<AccionValue>("ninguna");
   const [submitting, setSubmitting]           = useState(false);
 
+  // ── Exportar CSV ──
+  const [exporting, setExporting] = useState(false);
+
   // ── Debounce del buscador (400 ms) ──
   useEffect(() => {
     const t = setTimeout(() => { setBuscarDeb(buscar); setPage(1); }, 400);
@@ -336,6 +340,73 @@ export default function AdminReportesPage() {
       minute: "2-digit",
     }).format(new Date(date));
 
+  // ── Exportar CSV ─────────────────────────────────────────────────────────
+  const exportarCSV = async () => {
+    setExporting(true);
+    try {
+      // Descarga todos los reportes con los filtros actuales (sin paginación)
+      const params = new URLSearchParams({ page: "1", limit: "500" });
+      if (tabEstado !== "todos") params.set("estado", tabEstado);
+      if (filterMotivo !== "todos") params.set("motivo", filterMotivo);
+      if (buscarDebounced) params.set("buscar", buscarDebounced);
+
+      const res = await fetch(`/api/admin/reportes?${params}`);
+      if (!res.ok) throw new Error("Error al obtener datos");
+
+      const data = await res.json();
+      const rows: Reporte[] = data.reportes;
+
+      const BOM = "﻿";
+      const headers = [
+        "ID Reporte",
+        "Estado",
+        "Motivo",
+        "Publicación",
+        "Tipo Publicación",
+        "Estado Publicación",
+        "Autor Publicación",
+        "Reportante",
+        "Descripción",
+        "Fecha Reporte",
+        "Fecha Resolución",
+      ].join(",");
+
+      const escape = (val: string | null | undefined) => {
+        const s = String(val ?? "");
+        return `"${s.replace(/"/g, '""')}"`;
+      };
+
+      const lines = rows.map((r) =>
+        [
+          r.id,
+          r.estado,
+          r.motivo,
+          escape(r.publicacion?.titulo),
+          r.publicacion?.tipo ?? "",
+          r.publicacion?.estado ?? "",
+          escape(r.publicacion?.autor?.nombre),
+          escape(r.reportante?.nombre),
+          escape(r.descripcion),
+          r.creadoEn,
+          r.resolvidoEn ?? "",
+        ].join(",")
+      );
+
+      const csv = BOM + [headers, ...lines].join("\r\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `reportes-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("No se pudo exportar el CSV");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -351,16 +422,28 @@ export default function AdminReportesPage() {
             Revisa, modera y gestiona los reportes de contenido del marketplace
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="rounded-full"
-          onClick={() => fetchReportes(true)}
-          disabled={refreshing}
-        >
-          <RefreshCw className={`w-4 h-4 mr-1.5 ${refreshing ? "animate-spin" : ""}`} />
-          Actualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full"
+            onClick={exportarCSV}
+            disabled={exporting}
+          >
+            <Download className={`w-4 h-4 mr-1.5 ${exporting ? "animate-bounce" : ""}`} />
+            {exporting ? "Exportando…" : "Exportar CSV"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full"
+            onClick={() => fetchReportes(true)}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`w-4 h-4 mr-1.5 ${refreshing ? "animate-spin" : ""}`} />
+            Actualizar
+          </Button>
+        </div>
       </div>
 
       {/* ── KPIs / Stats ── */}

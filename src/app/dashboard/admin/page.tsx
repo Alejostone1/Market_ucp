@@ -127,18 +127,22 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg rounded-xl bg-red-50 border-red-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-red-800">
-              Reportes Pendientes
-            </CardTitle>
-            <AlertTriangle className="w-5 h-5 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-red-600">{stats.reportesPendientes}</div>
-            <p className="text-xs text-red-700 mt-1">Por revisar</p>
-          </CardContent>
-        </Card>
+        <Link href="/dashboard/admin/reportes" className="block group">
+          <Card className="border-0 shadow-lg rounded-xl bg-red-50 border-red-200 group-hover:shadow-xl transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-red-800">
+                Reportes Pendientes
+              </CardTitle>
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-red-600">{stats.reportesPendientes}</div>
+              <p className="text-xs text-red-700 mt-1 group-hover:underline">
+                Ver reportes →
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Charts Section */}
