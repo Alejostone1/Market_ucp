@@ -199,10 +199,10 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="relative z-10 container mx-auto px-4 py-20 grid lg:grid-cols-2 gap-12 items-center">
+        <div className="relative z-10 container mx-auto px-4 py-10 sm:py-16 lg:py-20 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           <div>
             <motion.h1
-              className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.05] text-white mb-6"
+              className="text-4xl sm:text-5xl lg:text-7xl font-black leading-[1.05] text-white mb-4 sm:mb-6"
               variants={fadeUp} initial="hidden" animate="visible" custom={0}
             >
               Compra, vende<br />
@@ -210,7 +210,7 @@ export default function HomePage() {
             </motion.h1>
 
             <motion.p
-              className="text-lg text-white/70 mb-10 max-w-lg leading-relaxed"
+              className="text-base sm:text-lg text-white/70 mb-6 sm:mb-10 max-w-lg leading-relaxed"
               variants={fadeUp} initial="hidden" animate="visible" custom={1}
             >
               La plataforma exclusiva para la comunidad de la Universidad Católica de Pereira. Productos, servicios, eventos y oportunidades — todo en un lugar.
@@ -220,27 +220,28 @@ export default function HomePage() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
               <input
                 type="text"
-                placeholder="Buscar productos, servicios, eventos…"
+                placeholder="Buscar en la UCP…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && searchQuery.trim())
                     window.location.href = "/explore?q=" + encodeURIComponent(searchQuery.trim());
                 }}
-                className="w-full pl-12 pr-36 py-4 rounded-2xl bg-white/15 backdrop-blur border border-white/25 text-white placeholder-white/45 focus:outline-none focus:border-white/60 focus:bg-white/20 transition-all text-sm"
+                className="w-full pl-12 pr-14 sm:pr-36 py-3.5 sm:py-4 rounded-2xl bg-white/15 backdrop-blur border border-white/25 text-white placeholder-white/45 focus:outline-none focus:border-white/60 focus:bg-white/20 transition-all text-sm"
               />
               <button
                 onClick={() => {
                   if (searchQuery.trim())
                     window.location.href = "/explore?q=" + encodeURIComponent(searchQuery.trim());
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white text-[#881a1d] hover:bg-white/90 text-sm font-bold px-5 py-2.5 rounded-xl transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white text-[#881a1d] hover:bg-white/90 font-bold rounded-xl transition-colors px-2.5 sm:px-5 py-2 sm:py-2.5 flex items-center justify-center"
               >
-                Buscar
+                <Search className="w-4 h-4 sm:hidden" />
+                <span className="hidden sm:inline text-sm">Buscar</span>
               </button>
             </motion.div>
 
-            <motion.div className="flex flex-wrap gap-3 mb-12" variants={fadeUp} initial="hidden" animate="visible" custom={3}>
+            <motion.div className="flex flex-wrap gap-3 mb-8 sm:mb-12" variants={fadeUp} initial="hidden" animate="visible" custom={3}>
               <Link href="/explore">
                 <button className="flex items-center gap-2 bg-white text-[#881a1d] font-bold px-7 py-3.5 rounded-2xl transition-all hover:scale-105 shadow-xl hover:shadow-2xl">
                   <Package className="w-4 h-4" />Explorar todo
@@ -253,14 +254,14 @@ export default function HomePage() {
               </Link>
             </motion.div>
 
-            <motion.div className="flex gap-8" variants={fadeUp} initial="hidden" animate="visible" custom={4}>
+            <motion.div className="flex gap-5 sm:gap-8" variants={fadeUp} initial="hidden" animate="visible" custom={4}>
               {[
                 { value: 500, suffix: "+", label: "Publicaciones" },
                 { value: 1200, suffix: "+", label: "Estudiantes" },
                 { value: 12, suffix: "", label: "Categorías" },
               ].map((s) => (
                 <div key={s.label}>
-                  <p className="text-2xl font-black text-white">
+                  <p className="text-xl sm:text-2xl font-black text-white">
                     <AnimatedCounter target={s.value} suffix={s.suffix} />
                   </p>
                   <p className="text-xs text-white/45 mt-0.5">{s.label}</p>
@@ -335,9 +336,9 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════ PUBLICACIONES RECIENTES ══════════════ */}
-      <Section className="py-20 bg-white">
+      <Section className="py-12 sm:py-20 bg-white">
         <div className="container mx-auto px-4">
-          <motion.div className="flex items-end justify-between mb-10" variants={fadeUp} custom={0}>
+          <motion.div className="flex items-end justify-between mb-6 sm:mb-10" variants={fadeUp} custom={0}>
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="w-5 h-5 text-[#881a1d]" />
@@ -377,11 +378,11 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════════════════
           ¿POR QUÉ UCP MARKETPLACE? — Bento magazine con fotos reales
       ══════════════════════════════════════════════════════════════════ */}
-      <Section className="py-24 bg-gray-50">
+      <Section className="py-12 sm:py-24 bg-gray-50">
         <div className="container mx-auto px-4">
 
           {/* Encabezado */}
-          <motion.div className="text-center mb-14" variants={fadeUp} custom={0}>
+          <motion.div className="text-center mb-8 sm:mb-14" variants={fadeUp} custom={0}>
             <span className="text-sm font-bold text-[#881a1d] uppercase tracking-widest">¿Por qué elegirnos?</span>
             <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mt-2">
               Hecho para la comunidad UCP
@@ -393,7 +394,7 @@ export default function HomePage() {
 
             {/* Card 1 — Grande, 2 columnas × 2 filas */}
             <motion.div
-              className="md:col-span-2 md:row-span-2 relative rounded-3xl overflow-hidden group min-h-[320px] cursor-pointer"
+              className="md:col-span-2 md:row-span-2 relative rounded-3xl overflow-hidden group min-h-[260px] sm:min-h-[320px] cursor-pointer"
               variants={fadeUp}
               custom={1}
             >
@@ -426,7 +427,7 @@ export default function HomePage() {
 
             {/* Card 2 — Pequeña, columna derecha fila 1 */}
             <motion.div
-              className="relative rounded-3xl overflow-hidden group min-h-[260px] cursor-pointer"
+              className="relative rounded-3xl overflow-hidden group min-h-[200px] sm:min-h-[260px] cursor-pointer"
               variants={fadeUp}
               custom={2}
             >
@@ -456,7 +457,7 @@ export default function HomePage() {
 
             {/* Card 3 — Pequeña, columna derecha fila 2 */}
             <motion.div
-              className="relative rounded-3xl overflow-hidden group min-h-[260px] cursor-pointer"
+              className="relative rounded-3xl overflow-hidden group min-h-[200px] sm:min-h-[260px] cursor-pointer"
               variants={fadeUp}
               custom={3}
             >
@@ -491,11 +492,11 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════════════════
           CATEGORÍAS — Split screen interactivo + Grid móvil
       ══════════════════════════════════════════════════════════════════ */}
-      <Section className="py-24 bg-white">
+      <Section className="py-12 sm:py-24 bg-white">
         <div className="container mx-auto px-4">
 
           {/* Encabezado */}
-          <motion.div className="text-center mb-12" variants={fadeUp} custom={0}>
+          <motion.div className="text-center mb-8 sm:mb-12" variants={fadeUp} custom={0}>
             <span className="text-sm font-bold text-[#881a1d] uppercase tracking-widest">Explora</span>
             <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mt-2">Categorías</h2>
           </motion.div>
@@ -666,7 +667,7 @@ export default function HomePage() {
       </Section>
 
       {/* ══════════════ CTA FINAL ══════════════ */}
-      <Section className="relative py-24 overflow-hidden">
+      <Section className="relative py-12 sm:py-24 overflow-hidden">
         <div
           className="absolute inset-0"
           style={{ background: "linear-gradient(135deg, #881a1d 0%, #9a1f22 50%, #c55f23 100%)" }}
@@ -685,25 +686,25 @@ export default function HomePage() {
 
         <div className="relative z-10 container mx-auto px-4 text-center">
           <motion.h2
-            className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6 max-w-3xl mx-auto leading-tight"
+            className="text-3xl sm:text-4xl lg:text-6xl font-black text-white mb-4 sm:mb-6 max-w-3xl mx-auto leading-tight"
             variants={fadeUp} custom={0}
           >
             Haz parte del<br />
             <span className="text-[#f4c222]">marketplace UCP</span>
           </motion.h2>
 
-          <motion.p className="text-white/65 text-lg mb-10 max-w-lg mx-auto" variants={fadeUp} custom={1}>
+          <motion.p className="text-white/65 text-base sm:text-lg mb-6 sm:mb-10 max-w-lg mx-auto" variants={fadeUp} custom={1}>
             Crea tu cuenta con tu correo institucional y empieza a comprar, vender y conectar con toda tu comunidad.
           </motion.p>
 
           <motion.div className="flex flex-wrap gap-4 justify-center" variants={fadeUp} custom={2}>
             <Link href="/register">
-              <button className="bg-white text-[#881a1d] font-bold px-10 py-4 rounded-2xl transition-all hover:scale-105 shadow-xl text-lg hover:shadow-2xl">
+              <button className="bg-white text-[#881a1d] font-bold px-6 sm:px-10 py-3 sm:py-4 rounded-2xl transition-all hover:scale-105 shadow-xl text-base sm:text-lg hover:shadow-2xl">
                 Crear cuenta gratis
               </button>
             </Link>
             <Link href="/explore">
-              <button className="bg-white/15 hover:bg-white/25 text-white font-semibold px-10 py-4 rounded-2xl border border-white/30 transition-all hover:scale-105 backdrop-blur text-lg">
+              <button className="bg-white/15 hover:bg-white/25 text-white font-semibold px-6 sm:px-10 py-3 sm:py-4 rounded-2xl border border-white/30 transition-all hover:scale-105 backdrop-blur text-base sm:text-lg">
                 Explorar primero
               </button>
             </Link>

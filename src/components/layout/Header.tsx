@@ -71,7 +71,7 @@ export function Header() {
           {/* Logo */}
           <Link href={isAuthenticated ?
             (usuario?.rol === "ADMIN" ? "/admin/dashboard" : "/dashboard/student") : "/"}
-            className="flex items-center gap-2 shrink-0">
+            className="flex items-center gap-2 shrink-0 min-w-0">
             <img
               src="/logo_ucp.png"
               alt="UCP Logo"
@@ -171,6 +171,13 @@ export function Header() {
               </>
             ) : (
               <>
+                {/* Mobile search icon — link to explore */}
+                <Link href="/explore" className="md:hidden">
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <Search className="w-5 h-5" />
+                  </Button>
+                </Link>
+
                 <Link href="/favorites">
                   <Button variant="ghost" size="icon" className="relative rounded-full">
                     <Heart className="w-5 h-5" />
@@ -191,12 +198,13 @@ export function Header() {
                     )}
                   </Button>
                 </Link>
-                <Link href="/login">
+                {/* Auth buttons — hidden on mobile, visible md+ */}
+                <Link href="/login" className="hidden md:block">
                   <Button variant="ghost" className="rounded-full">
                     Iniciar Sesión
                   </Button>
                 </Link>
-                <Link href="/register">
+                <Link href="/register" className="hidden md:block">
                   <Button className="bg-ucp-rojo text-white hover:bg-red-700 rounded-full">
                     Registrarse
                   </Button>
@@ -426,19 +434,7 @@ export function Header() {
           </div>
         </div>
 
-        {/* Mobile Search */}
-        <div className="mt-3 md:hidden">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <Input
-              type="search"
-              placeholder="Buscar..."
-              className="pl-10 pr-4 w-full rounded-full"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
+
       </div>
     </header>
   );
