@@ -51,7 +51,7 @@ function MessagesContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const msgsContainerRef = useRef<HTMLDivElement>(null);
 
   const fetchMensajes = async (conversacionId: string) => {
     try {
@@ -96,9 +96,10 @@ function MessagesContent() {
     load();
   }, [usuario?.id, convIdParam]);
 
-  // Scroll to bottom when messages change
+  // Scroll al fondo cuando cambian los mensajes
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = msgsContainerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [chatMessages]);
 
   const handleSelectChat = async (conv: Conversacion) => {
@@ -232,8 +233,8 @@ function MessagesContent() {
                     </Button>
                   </div>
 
-                  {/* Mensajes */}
-                  <ScrollArea className="flex-1 p-4">
+                  {/* Mensajes — div nativo para que scrollTop funcione correctamente */}
+                  <div ref={msgsContainerRef} className="flex-1 overflow-y-auto p-4">
                     <div className="space-y-3">
                       {chatMessages.map((msg) => {
                         const isMine = msg.emisorId === usuario?.id;
@@ -256,9 +257,8 @@ function MessagesContent() {
                           </div>
                         );
                       })}
-                      <div ref={bottomRef} />
                     </div>
-                  </ScrollArea>
+                  </div>
 
                   {/* Input de mensaje */}
                   <div className="p-4 bg-white border-t shrink-0">

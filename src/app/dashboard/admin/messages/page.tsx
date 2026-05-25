@@ -382,11 +382,12 @@ function AdminMessagesContent() {
     [selectedConvId, fetchMessages, markAsRead, joinConversation, leaveConversation, router]
   );
 
-  // ── Auto-scroll ──────────────────────────────────────────────────────────
+  // ── Auto-scroll al fondo ─────────────────────────────────────────────────
 
   useEffect(() => {
     if (!loadingMessages && messages.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      const el = scrollAreaRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
     }
   }, [messages, loadingMessages]);
 

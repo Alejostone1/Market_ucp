@@ -235,6 +235,7 @@ function MessagesContent() {
   const [showSearch, setShowSearch] = useState(false);
 
   const endRef = useRef<HTMLDivElement>(null);
+  const msgsContainerRef = useRef<HTMLDivElement>(null);
   const typingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedConv = conversations.find((c) => c.id === selectedId) ?? null;
@@ -306,11 +307,13 @@ function MessagesContent() {
     router.replace(`/admin/dashboard/messages?c=${convId}`, { scroll: false });
   }, [selectedId, fetchMsgs, markRead, joinConversation, leaveConversation, router]);
 
-  // ── Auto-scroll ────────────────────────────────────────────────────────────
+  // ── Auto-scroll al fondo ──────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!loadingMsgs && messages.length > 0)
-      endRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!loadingMsgs && messages.length > 0) {
+      const el = msgsContainerRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
+    }
   }, [messages, loadingMsgs]);
 
   // ── Load more on scroll top ────────────────────────────────────────────────
@@ -635,7 +638,7 @@ function MessagesContent() {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto" onScroll={onScroll}>
+              <div ref={msgsContainerRef} className="flex-1 overflow-y-auto" onScroll={onScroll}>
                 {loadingMore && <div className="flex justify-center py-3"><Loader2 className="w-4 h-4 animate-spin text-gray-400" /></div>}
                 {loadingMsgs ? (
                   <div className="space-y-4 p-4">
