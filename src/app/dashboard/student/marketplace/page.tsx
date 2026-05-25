@@ -68,6 +68,9 @@ export default function MarketplacePage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState<any>(null);
+  // Precio: borrador (mientras el usuario escribe) vs aplicado (lo que va a la API)
+  const [draftMin, setDraftMin] = useState<string>("");
+  const [draftMax, setDraftMax] = useState<string>("");
   const [minPrecio, setMinPrecio] = useState<string>("");
   const [maxPrecio, setMaxPrecio] = useState<string>("");
 
@@ -85,7 +88,7 @@ export default function MarketplacePage() {
     }, 300);
 
     return () => clearTimeout(delayedSearch);
-  }, [searchQuery, selectedCategoria, selectedTipo, sortBy, minPrecio, maxPrecio]);
+  }, [searchQuery, selectedCategoria, selectedTipo, sortBy, minPrecio, maxPrecio]); // minPrecio/maxPrecio solo cambian al hacer clic en "Aplicar"
 
   useEffect(() => {
     fetchPublicaciones();
@@ -287,103 +290,150 @@ export default function MarketplacePage() {
         </div>
       </div>
 
-      {/* Filtros y búsqueda */}
-      <Card className="border-0 shadow-lg rounded-xl p-6 mb-8">
-        <div className="grid md:grid-cols-12 gap-4">
-          {/* Búsqueda */}
-          <div className="md:col-span-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                type="search"
-                placeholder="Buscar productos, servicios..."
-                className="pl-10 rounded-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
+      {/* ── Filtros y búsqueda ── */}
+      <Card className="border-0 shadow-lg rounded-xl p-5 mb-8">
 
+        {/* Fila 1: búsqueda + ordenar */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Input
+              type="search"
+              placeholder="Buscar productos, servicios, eventos…"
+              className="pl-10 rounded-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <select
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucp-rojo text-sm bg-white shrink-0"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="recientes">Más recientes</option>
+            <option value="precio-asc">Precio: menor a mayor</option>
+            <option value="precio-desc">Precio: mayor a menor</option>
+            <option value="populares">Más populares</option>
+          </select>
+        </div>
+
+        {/* Fila 2: categoría + tipo + precio */}
+        <div className="flex flex-col sm:flex-row gap-3 items-end">
           {/* Categoría */}
-          <div className="md:col-span-2">
+          <div className="flex-1 min-w-0">
+            <label className="text-xs text-gray-500 mb-1 block font-medium">Categoría</label>
             <select
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucp-rojo text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucp-rojo text-sm bg-white"
               value={selectedCategoria}
               onChange={(e) => setSelectedCategoria(e.target.value)}
             >
               <option value="">Todas las categorías</option>
               {categorias.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.nombre}
-                </option>
+                <option key={cat.id} value={cat.id}>{cat.nombre}</option>
               ))}
             </select>
           </div>
 
           {/* Tipo */}
-          <div className="md:col-span-2">
+          <div className="flex-1 min-w-0">
+            <label className="text-xs text-gray-500 mb-1 block font-medium">Tipo</label>
             <select
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucp-rojo text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucp-rojo text-sm bg-white"
               value={selectedTipo}
               onChange={(e) => setSelectedTipo(e.target.value)}
             >
               <option value="">Todos los tipos</option>
-              <option value="PRODUCTO">Productos</option>
-              <option value="SERVICIO">Servicios</option>
-              <option value="EVENTO">Eventos</option>
-              <option value="CONVOCATORIA">Convocatorias</option>
-            </select>
-          </div>
-
-          {/* Ordenar */}
-          <div className="md:col-span-2">
-            <select
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucp-rojo text-sm"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              <option value="recientes">Más recientes</option>
-              <option value="precio-asc">Precio: Menor a mayor</option>
-              <option value="precio-desc">Precio: Mayor a menor</option>
-              <option value="populares">Más populares</option>
+              <option value="PRODUCTO">Producto</option>
+              <option value="SERVICIO">Servicio</option>
+              <option value="EVENTO">Evento</option>
+              <option value="CONVOCATORIA">Convocatoria</option>
             </select>
           </div>
 
           {/* Rango de precio */}
-          <div className="md:col-span-2 flex items-center gap-1">
-            <Input
-              type="number"
-              placeholder="Min $"
-              min={0}
-              className="rounded-lg text-sm h-[38px] px-2"
-              value={minPrecio}
-              onChange={(e) => setMinPrecio(e.target.value)}
-            />
-            <span className="text-gray-400 text-xs shrink-0">—</span>
-            <Input
-              type="number"
-              placeholder="Max $"
-              min={0}
-              className="rounded-lg text-sm h-[38px] px-2"
-              value={maxPrecio}
-              onChange={(e) => setMaxPrecio(e.target.value)}
-            />
+          <div className="flex-1 min-w-0">
+            <label className="text-xs text-gray-500 mb-1 block font-medium">
+              Precio
+              {(minPrecio || maxPrecio) && (
+                <span className="ml-1 text-ucp-rojo font-semibold">
+                  (aplicado:{" "}
+                  {minPrecio ? `$${Number(minPrecio).toLocaleString("es-CO")}` : "$0"}
+                  {" — "}
+                  {maxPrecio ? `$${Number(maxPrecio).toLocaleString("es-CO")}` : "sin límite"})
+                </span>
+              )}
+            </label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                placeholder="Mín $"
+                min={0}
+                className="h-9 text-sm px-2 w-full"
+                value={draftMin}
+                onChange={(e) => setDraftMin(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setMinPrecio(draftMin);
+                    setMaxPrecio(draftMax);
+                    setCurrentPage(1);
+                  }
+                }}
+              />
+              <span className="text-gray-400 shrink-0 text-sm">—</span>
+              <Input
+                type="number"
+                placeholder="Máx $"
+                min={0}
+                className="h-9 text-sm px-2 w-full"
+                value={draftMax}
+                onChange={(e) => setDraftMax(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setMinPrecio(draftMin);
+                    setMaxPrecio(draftMax);
+                    setCurrentPage(1);
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Botón Aplicar precio */}
+          <div className="shrink-0">
+            <label className="text-xs text-transparent mb-1 block select-none">.</label>
+            <Button
+              size="sm"
+              className="bg-ucp-rojo hover:bg-red-700 text-white rounded-lg h-9 px-4 whitespace-nowrap"
+              onClick={() => {
+                setMinPrecio(draftMin);
+                setMaxPrecio(draftMax);
+                setCurrentPage(1);
+              }}
+            >
+              Aplicar precio
+            </Button>
           </div>
         </div>
 
         {/* Limpiar filtros */}
         {(searchQuery || selectedCategoria || selectedTipo || sortBy !== "recientes" || minPrecio || maxPrecio) && (
-          <div className="mt-3 flex justify-end">
+          <div className="mt-3 pt-3 border-t flex justify-between items-center">
+            <span className="text-xs text-gray-400">
+              Filtros activos
+            </span>
             <button
               onClick={() => {
                 setSearchQuery("");
                 setSelectedCategoria("");
                 setSelectedTipo("");
                 setSortBy("recientes");
+                setDraftMin("");
+                setDraftMax("");
                 setMinPrecio("");
                 setMaxPrecio("");
+                setCurrentPage(1);
               }}
-              className="text-xs text-ucp-rojo hover:underline"
+              className="text-xs text-ucp-rojo hover:underline font-medium"
             >
               Limpiar todos los filtros
             </button>
@@ -405,8 +455,11 @@ export default function MarketplacePage() {
               setSelectedCategoria("");
               setSelectedTipo("");
               setSortBy("recientes");
+              setDraftMin("");
+              setDraftMax("");
               setMinPrecio("");
               setMaxPrecio("");
+              setCurrentPage(1);
             }}
             className="bg-ucp-rojo text-white hover:bg-red-700 rounded-full"
           >
