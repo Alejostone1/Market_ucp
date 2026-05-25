@@ -28,9 +28,9 @@ export default function RootLayout({
           <CartProvider>
             <FavoritesProvider>
               <MessageProvider>
-                <div className="min-h-screen bg-gray-50">
+                <div className="min-h-screen bg-gray-50 overflow-x-hidden w-full">
                   <Header />
-                  <main>{children}</main>
+                  <main className="overflow-x-hidden">{children}</main>
                   <Footer />
                 </div>
                 <Toaster position="bottom-right" richColors closeButton />

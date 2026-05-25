@@ -65,9 +65,9 @@ export function Header() {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
-      <div className="container mx-auto px-4 py-2">
-        <div className="flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm overflow-hidden">
+      <div className="container mx-auto px-3 sm:px-4 py-2 max-w-full">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
           {/* Logo */}
           <Link href={isAuthenticated ?
             (usuario?.rol === "ADMIN" ? "/admin/dashboard" : "/dashboard/student") : "/"}
@@ -103,7 +103,7 @@ export function Header() {
           </nav>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5 sm:gap-2">
             {isAuthenticated ? (
               <>
                 {usuario?.rol === "ESTUDIANTE" && (

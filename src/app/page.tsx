@@ -183,12 +183,12 @@ export default function HomePage() {
 
       {/* ══════════════ HERO ══════════════ */}
       <section
-        className="relative min-h-[92vh] flex items-center overflow-hidden"
+        className="relative min-h-[92vh] flex items-center overflow-hidden w-full"
         style={{ background: "linear-gradient(140deg, #881a1d 0%, #9a1f22 40%, #c55f23 100%)" }}
       >
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/5 rounded-full translate-x-1/3 -translate-y-1/3" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-black/15 rounded-full -translate-x-1/4 translate-y-1/3" />
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 right-0 w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] bg-white/5 rounded-full translate-x-1/3 -translate-y-1/3" />
+          <div className="absolute bottom-0 left-0 w-[200px] sm:w-[400px] h-[200px] sm:h-[400px] bg-black/15 rounded-full -translate-x-1/4 translate-y-1/3" />
           <div className="absolute top-1/2 left-1/2 w-[300px] h-[300px] bg-[#f4c222]/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
           <div
             className="absolute inset-0 opacity-[0.06]"
@@ -295,8 +295,8 @@ export default function HomePage() {
           </motion.div>
         </div>
 
-        <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none">
-          <svg viewBox="0 0 1440 60" preserveAspectRatio="none" className="w-full h-12 fill-white">
+        <div className="absolute bottom-0 left-0 right-0 overflow-hidden leading-none">
+          <svg viewBox="0 0 1440 60" preserveAspectRatio="none" className="w-full h-8 sm:h-12 fill-white block">
             <path d="M0,60 C360,0 1080,60 1440,20 L1440,60 Z" />
           </svg>
         </div>
@@ -672,7 +672,7 @@ export default function HomePage() {
           className="absolute inset-0"
           style={{ background: "linear-gradient(135deg, #881a1d 0%, #9a1f22 50%, #c55f23 100%)" }}
         />
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute -top-24 -left-24 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
           <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-[#f4c222]/10 rounded-full blur-3xl" />
           <div
