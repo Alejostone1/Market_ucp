@@ -1,0 +1,10 @@
+{
+  "name": "market-ucp-tests",
+  "scripts": {
+    "test": "npx playwright test",
+    "report": "npx playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0"
+  }
+}
