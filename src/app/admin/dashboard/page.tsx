@@ -1,13 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  FileText, 
-  Users, 
-  AlertTriangle, 
+import {
+  FileText,
+  Users,
+  AlertTriangle,
   TrendingUp,
   ArrowRight,
-  Clock
+  Clock,
+  Bell,
+  MessageSquare,
+  History,
+  Tag,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -127,18 +131,20 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg rounded-xl bg-red-50 border-red-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-red-800">
-              Reportes Pendientes
-            </CardTitle>
-            <AlertTriangle className="w-5 h-5 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-red-600">{stats.reportesPendientes}</div>
-            <p className="text-xs text-red-700 mt-1">Por revisar</p>
-          </CardContent>
-        </Card>
+        <Link href="/admin/dashboard/reportes" className="block group">
+          <Card className="border-0 shadow-lg rounded-xl bg-red-50 border-red-200 group-hover:shadow-xl transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-red-800">
+                Reportes Pendientes
+              </CardTitle>
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-red-600">{stats.reportesPendientes}</div>
+              <p className="text-xs text-red-700 mt-1 group-hover:underline">Ver reportes →</p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Charts Section */}
@@ -238,28 +244,46 @@ export default function AdminDashboardPage() {
           <CardHeader>
             <CardTitle>Acciones Rápidas</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <Link href="/dashboard/admin/publicaciones">
+          <CardContent className="space-y-2">
+            <Link href="/admin/dashboard/publicaciones">
               <Button variant="outline" className="w-full justify-between">
-                <span>Revisar Publicaciones</span>
+                <span className="flex items-center gap-2"><FileText className="w-4 h-4" />Revisar Publicaciones</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
-            <Link href="/dashboard/admin/reportes">
+            <Link href="/admin/dashboard/reportes">
               <Button variant="outline" className="w-full justify-between">
-                <span>Ver Reportes</span>
+                <span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" />Ver Reportes</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
-            <Link href="/dashboard/admin/usuarios">
+            <Link href="/admin/dashboard/usuarios">
               <Button variant="outline" className="w-full justify-between">
-                <span>Gestionar Usuarios</span>
+                <span className="flex items-center gap-2"><Users className="w-4 h-4" />Gestionar Usuarios</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
-            <Link href="/dashboard/admin/categorias">
+            <Link href="/admin/dashboard/categorias">
               <Button variant="outline" className="w-full justify-between">
-                <span>Categorías y Etiquetas</span>
+                <span className="flex items-center gap-2"><Tag className="w-4 h-4" />Categorías</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Link href="/admin/dashboard/notificaciones">
+              <Button variant="outline" className="w-full justify-between">
+                <span className="flex items-center gap-2"><Bell className="w-4 h-4" />Notificaciones</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Link href="/admin/dashboard/messages">
+              <Button variant="outline" className="w-full justify-between">
+                <span className="flex items-center gap-2"><MessageSquare className="w-4 h-4" />Mensajes</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Link href="/admin/dashboard/historial">
+              <Button variant="outline" className="w-full justify-between">
+                <span className="flex items-center gap-2"><History className="w-4 h-4" />Historial</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
