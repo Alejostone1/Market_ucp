@@ -6,38 +6,66 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Eye, EyeOff, Mail, Lock, User, ArrowRight,
-  GraduationCap, Building2, Info, CheckCircle2, AlertCircle,
+  GraduationCap, Building2, Info, CheckCircle2, AlertCircle, Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 
-const isUcpEmail = (email: string) =>
-  email.toLowerCase().trim().endsWith("@ucp.edu.co");
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const isUcpEmail   = (e: string) => e.toLowerCase().trim().endsWith("@ucp.edu.co");
+const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
+
+// ── Página ────────────────────────────────────────────────────────────────────
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [rol, setRol] = useState<"ESTUDIANTE" | "ALIADO">("ESTUDIANTE");
-  const [email, setEmail] = useState("");
+  const [isLoading,    setIsLoading]    = useState(false);
+  const [rol,          setRol]          = useState<"ESTUDIANTE" | "ALIADO">("ESTUDIANTE");
+  const [email,        setEmail]        = useState("");
   const router = useRouter();
 
+  // Derivaciones de estado
   const emailTyped = email.includes("@");
-  const ucpEmail = isUcpEmail(email);
-  const showEmailWarning = emailTyped && !ucpEmail;
+  const ucpEmail   = isUcpEmail(email);
+
+  // La advertencia de dominio UCP solo aplica a ESTUDIANTE
+  const showEmailWarning = rol === "ESTUDIANTE" && emailTyped && !ucpEmail;
+
+  // Clases del campo email — solo ESTUDIANTE recibe feedback de dominio
+  const emailBorderClass =
+    rol === "ESTUDIANTE" && emailTyped
+      ? ucpEmail
+        ? "border-green-400 focus:border-green-500 focus:ring-green-500/10"
+        : "border-amber-400 focus:border-amber-500 focus:ring-amber-500/10"
+      : "border-gray-200 focus:border-[#881a1d] focus:ring-[#881a1d]/10";
+
+  const handleRolChange = (nuevoRol: "ESTUDIANTE" | "ALIADO") => {
+    setRol(nuevoRol);
+    // Resetear email para evitar estados visuales confusos entre roles
+    setEmail("");
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!isUcpEmail(email)) {
-      toast.error("Solo se permiten correos institucionales @ucp.edu.co");
+    // Validación frontend: correo UCP solo para ESTUDIANTE
+    if (rol === "ESTUDIANTE" && !isUcpEmail(email)) {
+      toast.error("Los estudiantes deben usar un correo institucional @ucp.edu.co");
+      return;
+    }
+
+    // Validación básica de formato para ALIADO
+    if (rol === "ALIADO" && !isValidEmail(email)) {
+      toast.error("Ingresa un correo electrónico válido");
       return;
     }
 
     setIsLoading(true);
-    const formData = new FormData(e.currentTarget);
-    const nombre = formData.get("nombre") as string;
-    const correo = formData.get("email") as string;
-    const contrasena = formData.get("password") as string;
-    const confirmar = formData.get("confirmPassword") as string;
+    const formData   = new FormData(e.currentTarget);
+    const nombre     = formData.get("nombre")          as string;
+    const correo     = formData.get("email")           as string;
+    const contrasena = formData.get("password")        as string;
+    const confirmar  = formData.get("confirmPassword") as string;
 
     if (contrasena !== confirmar) {
       toast.error("Las contraseñas no coinciden");
@@ -47,9 +75,9 @@ export default function RegisterPage() {
 
     try {
       const response = await fetch("/api/auth/register", {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre, correo, contrasena, rol }),
+        body:    JSON.stringify({ nombre, correo, contrasena, rol }),
       });
 
       const data = await response.json();
@@ -59,6 +87,17 @@ export default function RegisterPage() {
         return;
       }
 
+      // ── Flujo post-registro según rol ────────────────────────────────────────
+      if (rol === "ALIADO") {
+        // El aliado queda PENDIENTE — NO se inicia sesión automáticamente
+        toast.success("¡Solicitud enviada! Tu cuenta está pendiente de aprobación.", {
+          duration: 5000,
+        });
+        router.push("/pending-approval");
+        return;
+      }
+
+      // ESTUDIANTE — cuenta activa de inmediato, iniciar sesión
       const usuarioString = JSON.stringify(data.usuario);
       localStorage.setItem("usuario", usuarioString);
       document.cookie = `usuario=${encodeURIComponent(usuarioString)}; path=/; max-age=604800`;
@@ -72,10 +111,17 @@ export default function RegisterPage() {
     }
   };
 
+  // ── Textos dinámicos según rol ─────────────────────────────────────────────
+  const emailLabel       = rol === "ESTUDIANTE" ? "Correo institucional" : "Correo electrónico";
+  const emailPlaceholder = rol === "ESTUDIANTE" ? "nombre@ucp.edu.co"   : "tu@empresa.com";
+  const subtitle         = rol === "ESTUDIANTE"
+    ? "Regístrate con tu correo institucional @ucp.edu.co"
+    : "Regístrate con cualquier correo electrónico válido";
+
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
 
-      {/* ══════════════ PANEL IZQUIERDO — Marca (solo desktop) ══════════════ */}
+      {/* ══ PANEL IZQUIERDO — Marca (solo desktop) ══════════════════════════ */}
       <motion.div
         className="hidden lg:flex flex-col w-[44%] relative overflow-hidden"
         style={{ background: "linear-gradient(140deg, #881a1d 0%, #9e2124 50%, #c55f23 100%)" }}
@@ -126,10 +172,11 @@ export default function RegisterPage() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.6 }}
             >
-              Conecta con más de 1.200 estudiantes y empresas aliadas de la Universidad Católica de Pereira.
+              Conecta con más de 1.200 estudiantes y empresas aliadas de la
+              Universidad Católica de Pereira.
             </motion.p>
 
-            {/* Roles */}
+            {/* Selector de roles desktop */}
             <motion.div
               className="space-y-3"
               initial={{ opacity: 0, y: 15 }}
@@ -140,64 +187,94 @@ export default function RegisterPage() {
                 Elige tu rol
               </p>
 
+              {/* Estudiante */}
               <div
                 className={`p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${
                   rol === "ESTUDIANTE"
                     ? "bg-white/20 border-white/50 shadow-lg"
                     : "bg-white/5 border-white/15 hover:bg-white/10"
                 }`}
-                onClick={() => setRol("ESTUDIANTE")}
+                onClick={() => handleRolChange("ESTUDIANTE")}
               >
                 <div className="flex items-center gap-2.5 mb-1">
                   <GraduationCap className="w-4 h-4 text-[#f4c222]" />
                   <p className="text-white font-semibold text-sm">Estudiante UCP</p>
-                  {rol === "ESTUDIANTE" && <CheckCircle2 className="w-4 h-4 text-[#f4c222] ml-auto" />}
+                  {rol === "ESTUDIANTE" && (
+                    <CheckCircle2 className="w-4 h-4 text-[#f4c222] ml-auto" />
+                  )}
                 </div>
                 <p className="text-white/60 text-xs leading-relaxed">
-                  Compra, vende y conecta con toda la comunidad universitaria.
+                  Compra, vende y conecta con la comunidad. Requiere correo{" "}
+                  <strong className="text-white/80">@ucp.edu.co</strong>.
                 </p>
               </div>
 
+              {/* Aliado */}
               <div
                 className={`p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${
                   rol === "ALIADO"
                     ? "bg-white/20 border-white/50 shadow-lg"
                     : "bg-white/5 border-white/15 hover:bg-white/10"
                 }`}
-                onClick={() => setRol("ALIADO")}
+                onClick={() => handleRolChange("ALIADO")}
               >
                 <div className="flex items-center gap-2.5 mb-1">
                   <Building2 className="w-4 h-4 text-[#f4c222]" />
                   <p className="text-white font-semibold text-sm">Aliado / Empresa</p>
-                  {rol === "ALIADO" && <CheckCircle2 className="w-4 h-4 text-[#f4c222] ml-auto" />}
+                  {rol === "ALIADO" && (
+                    <CheckCircle2 className="w-4 h-4 text-[#f4c222] ml-auto" />
+                  )}
                 </div>
                 <p className="text-white/60 text-xs leading-relaxed">
-                  Empresa o profesional que publica ofertas y servicios para la comunidad.
+                  Publica servicios u ofertas para la comunidad. Cualquier correo
+                  válido. Requiere{" "}
+                  <strong className="text-white/80">aprobación del admin</strong>.
                 </p>
               </div>
             </motion.div>
 
-            {/* Info UCP email */}
-            <motion.div
-              className="mt-8 flex items-start gap-2.5 bg-white/10 rounded-xl p-4 border border-white/10"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.6 }}
-            >
-              <Info className="w-4 h-4 text-[#f4c222] shrink-0 mt-0.5" />
-              <p className="text-white/65 text-xs leading-relaxed">
-                Necesitas un correo <strong className="text-white/90">@ucp.edu.co</strong> para registrarte. Si eres aliado externo, escribe a{" "}
-                <strong className="text-[#f4c222]">admin@ucp.edu.co</strong>.
-              </p>
-            </motion.div>
+            {/* Info note — condicional según rol */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={rol}
+                className={`mt-8 flex items-start gap-2.5 rounded-xl p-4 border ${
+                  rol === "ESTUDIANTE"
+                    ? "bg-white/10 border-white/10"
+                    : "bg-[#f4c222]/10 border-[#f4c222]/20"
+                }`}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.3 }}
+              >
+                {rol === "ESTUDIANTE" ? (
+                  <>
+                    <Info className="w-4 h-4 text-[#f4c222] shrink-0 mt-0.5" />
+                    <p className="text-white/65 text-xs leading-relaxed">
+                      Necesitas un correo{" "}
+                      <strong className="text-white/90">@ucp.edu.co</strong> para
+                      registrarte como estudiante.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Clock className="w-4 h-4 text-[#f4c222] shrink-0 mt-0.5" />
+                    <p className="text-white/65 text-xs leading-relaxed">
+                      Tu solicitud será revisada por el administrador. Recibirás
+                      acceso una vez aprobada tu cuenta.
+                    </p>
+                  </>
+                )}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </motion.div>
 
-      {/* ══════════════ PANEL DERECHO — Formulario ══════════════ */}
+      {/* ══ PANEL DERECHO — Formulario ══════════════════════════════════════ */}
       <div className="flex-1 flex flex-col bg-white overflow-y-auto">
 
-        {/* ── Banner de marca SOLO MÓVIL ─────────────────────────────────── */}
+        {/* ── Banner móvil ──────────────────────────────────────────────────── */}
         <div
           className="lg:hidden relative overflow-hidden flex-shrink-0"
           style={{ background: "linear-gradient(140deg, #881a1d 0%, #9e2124 50%, #c55f23 100%)" }}
@@ -223,13 +300,13 @@ export default function RegisterPage() {
               </div>
             </Link>
 
-            {/* Selector de rol como chips */}
+            {/* Selector de rol como chips (móvil) */}
             <div className="flex gap-2">
               {(["ESTUDIANTE", "ALIADO"] as const).map((r) => (
                 <button
                   key={r}
                   type="button"
-                  onClick={() => setRol(r)}
+                  onClick={() => handleRolChange(r)}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                     rol === r
                       ? "bg-white text-[#881a1d] shadow-lg"
@@ -238,7 +315,7 @@ export default function RegisterPage() {
                 >
                   {r === "ESTUDIANTE"
                     ? <><GraduationCap className="w-3.5 h-3.5" /> Estudiante</>
-                    : <><Building2 className="w-3.5 h-3.5" /> Aliado</>
+                    : <><Building2     className="w-3.5 h-3.5" /> Aliado</>
                   }
                 </button>
               ))}
@@ -254,14 +331,13 @@ export default function RegisterPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mb-1">Crear cuenta</h1>
-            <p className="text-gray-500 text-sm mb-5">
-              {rol === "ALIADO"
-                ? "Regístrate como aliado con tu correo @ucp.edu.co"
-                : "Regístrate con tu correo institucional UCP"}
-            </p>
+            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mb-1">
+              Crear cuenta
+            </h1>
+            <p className="text-gray-500 text-sm mb-5">{subtitle}</p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+
               {/* Nombre */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
@@ -279,10 +355,10 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Correo */}
+              {/* Correo — comportamiento diferente según rol */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Correo institucional
+                  {emailLabel}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -291,29 +367,23 @@ export default function RegisterPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="nombre@ucp.edu.co"
+                    placeholder={emailPlaceholder}
                     required
-                    className={`w-full pl-10 pr-10 py-3 rounded-xl border transition-all text-sm bg-gray-50 hover:bg-white focus:bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
-                      emailTyped && ucpEmail
-                        ? "border-green-400 focus:border-green-500 focus:ring-green-500/10"
-                        : emailTyped && !ucpEmail
-                        ? "border-amber-400 focus:border-amber-500 focus:ring-amber-500/10"
-                        : "border-gray-200 focus:border-[#881a1d] focus:ring-[#881a1d]/10"
-                    }`}
+                    className={`w-full pl-10 pr-10 py-3 rounded-xl border transition-all text-sm bg-gray-50 hover:bg-white focus:bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 ${emailBorderClass}`}
                   />
-                  {emailTyped && (
+                  {/* Icono de validación — solo para ESTUDIANTE */}
+                  {rol === "ESTUDIANTE" && emailTyped && (
                     <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                      {ucpEmail ? (
-                        <CheckCircle2 className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <AlertCircle className="w-4 h-4 text-amber-500" />
-                      )}
+                      {ucpEmail
+                        ? <CheckCircle2 className="w-4 h-4 text-green-500" />
+                        : <AlertCircle  className="w-4 h-4 text-amber-500" />
+                      }
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Alerta correo no UCP */}
+              {/* Alerta correo no UCP — SOLO para ESTUDIANTE */}
               <AnimatePresence>
                 {showEmailWarning && (
                   <motion.div
@@ -331,14 +401,36 @@ export default function RegisterPage() {
                             Correo institucional requerido
                           </p>
                           <p className="text-red-700 text-xs leading-relaxed">
-                            Solo se permiten correos <strong>@ucp.edu.co</strong>. Si no tienes correo institucional, escribe a{" "}
-                            <a
-                              href="mailto:admin@ucp.edu.co?subject=Solicitud%20de%20Acceso"
-                              className="font-semibold underline"
-                            >
-                              admin@ucp.edu.co
-                            </a>
-                            .
+                            Los estudiantes solo pueden usar correos{" "}
+                            <strong>@ucp.edu.co</strong>.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Info aprobación — SOLO para ALIADO */}
+              <AnimatePresence>
+                {rol === "ALIADO" && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5">
+                      <div className="flex items-start gap-2.5">
+                        <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-amber-800 font-semibold text-sm mb-0.5">
+                            Requiere aprobación
+                          </p>
+                          <p className="text-amber-700 text-xs leading-relaxed">
+                            Tu solicitud será revisada por el administrador antes
+                            de activar tu cuenta. Proceso: 1–2 días hábiles.
                           </p>
                         </div>
                       </div>
@@ -368,7 +460,10 @@ export default function RegisterPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword
+                      ? <EyeOff className="w-4 h-4" />
+                      : <Eye    className="w-4 h-4" />
+                    }
                   </button>
                 </div>
               </div>
@@ -390,7 +485,7 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Botón */}
+              {/* Botón submit */}
               <motion.button
                 type="submit"
                 disabled={isLoading || showEmailWarning}
@@ -400,11 +495,11 @@ export default function RegisterPage() {
                 {isLoading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                    Creando cuenta...
+                    {rol === "ALIADO" ? "Enviando solicitud..." : "Creando cuenta..."}
                   </>
                 ) : (
                   <>
-                    Crear cuenta gratis
+                    {rol === "ALIADO" ? "Enviar solicitud" : "Crear cuenta gratis"}
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -418,13 +513,40 @@ export default function RegisterPage() {
               </Link>
             </p>
 
-            {/* Info email solo móvil */}
-            <div className="lg:hidden mt-5 flex items-start gap-2.5 bg-red-50 rounded-xl p-3.5 border border-red-100">
-              <Info className="w-4 h-4 text-[#881a1d] shrink-0 mt-0.5" />
-              <p className="text-gray-600 text-xs leading-relaxed">
-                Necesitas un correo <strong className="text-gray-800">@ucp.edu.co</strong> para registrarte.
-              </p>
-            </div>
+            {/* Nota info — móvil, condicional según rol */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={rol}
+                className="lg:hidden mt-5 flex items-start gap-2.5 rounded-xl p-3.5 border"
+                style={{
+                  backgroundColor: rol === "ESTUDIANTE" ? "#fef2f2" : "#fffbeb",
+                  borderColor:     rol === "ESTUDIANTE" ? "#fecaca" : "#fde68a",
+                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {rol === "ESTUDIANTE" ? (
+                  <>
+                    <Info className="w-4 h-4 text-[#881a1d] shrink-0 mt-0.5" />
+                    <p className="text-gray-600 text-xs leading-relaxed">
+                      Necesitas un correo{" "}
+                      <strong className="text-gray-800">@ucp.edu.co</strong> para
+                      registrarte como estudiante.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <p className="text-gray-600 text-xs leading-relaxed">
+                      Como aliado puedes usar <strong className="text-gray-800">cualquier correo</strong>.
+                      Tu cuenta requiere aprobación del administrador.
+                    </p>
+                  </>
+                )}
+              </motion.div>
+            </AnimatePresence>
 
             <p className="mt-4 mb-6 text-xs text-gray-400 text-center">
               Al registrarte aceptas los términos de uso de UCP Marketplace

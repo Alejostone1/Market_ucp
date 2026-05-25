@@ -53,10 +53,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar si el usuario está verificado
+    // Verificar si el usuario está verificado / aprobado
     if (!usuario.verificado) {
+      // Mensaje diferenciado: aliados esperan aprobación del admin,
+      // estudiantes necesitarían verificar correo (flujo futuro).
+      const message =
+        usuario.rol === "ALIADO"
+          ? "Tu cuenta está pendiente de aprobación por el administrador. Te notificaremos cuando sea aprobada."
+          : "Tu cuenta no está verificada. Por favor verifica tu correo electrónico.";
+
       return NextResponse.json(
-        { message: "Tu cuenta no está verificada. Por favor verifica tu correo electrónico." },
+        { message, pendienteAprobacion: usuario.rol === "ALIADO" },
         { status: 403 }
       );
     }

@@ -6,26 +6,39 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard, FileText, Users, AlertTriangle,
   Tag, Bell, Home, MessageSquare, History, Menu, X,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = (pendingReportes: number, unreadMessages: number) => [
-  { title: "Dashboard",      href: "/admin/dashboard",               icon: LayoutDashboard, badge: 0 },
-  { title: "Publicaciones",  href: "/admin/dashboard/publicaciones", icon: FileText,        badge: 0 },
-  { title: "Usuarios",       href: "/admin/dashboard/usuarios",      icon: Users,           badge: 0 },
-  { title: "Reportes",       href: "/admin/dashboard/reportes",      icon: AlertTriangle,   badge: pendingReportes },
-  { title: "Categorías",     href: "/admin/dashboard/categorias",    icon: Tag,             badge: 0 },
-  { title: "Notificaciones", href: "/admin/dashboard/notificaciones",icon: Bell,            badge: 0 },
-  { title: "Mensajes",       href: "/admin/dashboard/messages",      icon: MessageSquare,   badge: unreadMessages },
-  { title: "Historial",      href: "/admin/dashboard/historial",     icon: History,         badge: 0 },
+const NAV_ITEMS = (
+  pendingReportes:  number,
+  unreadMessages:   number,
+  pendingAliados:   number,
+) => [
+  { title: "Dashboard",          href: "/admin/dashboard",               icon: LayoutDashboard, badge: 0 },
+  { title: "Publicaciones",      href: "/admin/dashboard/publicaciones", icon: FileText,        badge: 0 },
+  { title: "Usuarios",           href: "/admin/dashboard/usuarios",      icon: Users,           badge: 0 },
+  {
+    title: "Aliados Pendientes",
+    href:  "/admin/dashboard/aliados",
+    icon:  Building2,
+    badge: pendingAliados,
+  },
+  { title: "Reportes",           href: "/admin/dashboard/reportes",      icon: AlertTriangle,   badge: pendingReportes },
+  { title: "Categorías",         href: "/admin/dashboard/categorias",    icon: Tag,             badge: 0 },
+  { title: "Notificaciones",     href: "/admin/dashboard/notificaciones",icon: Bell,            badge: 0 },
+  { title: "Mensajes",           href: "/admin/dashboard/messages",      icon: MessageSquare,   badge: unreadMessages },
+  { title: "Historial",          href: "/admin/dashboard/historial",     icon: History,         badge: 0 },
 ];
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [pendingReportes, setPendingReportes] = useState(0);
-  const [unreadMessages, setUnreadMessages] = useState(0);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [unreadMessages,  setUnreadMessages]  = useState(0);
+  const [pendingAliados,  setPendingAliados]  = useState(0);
+  const [mobileOpen,      setMobileOpen]      = useState(false);
 
+  // Reportes pendientes
   useEffect(() => {
     fetch("/api/admin/reportes?estado=PENDIENTE&limit=1")
       .then((r) => r.json())
@@ -33,6 +46,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
       .catch(() => {});
   }, [pathname]);
 
+  // Mensajes no leídos
   useEffect(() => {
     const fetchUnread = () => {
       fetch("/api/conversaciones", { cache: "no-store" })
@@ -48,7 +62,21 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     return () => clearInterval(id);
   }, []);
 
-  // Close mobile menu on route change
+  // Aliados pendientes de aprobación
+  useEffect(() => {
+    const fetchPendingAliados = () => {
+      fetch("/api/admin/usuarios?rol=ALIADO&verificado=false&bloqueado=false&limit=1")
+        .then((r) => r.json())
+        .then((d) => setPendingAliados(d.pagination?.total ?? 0))
+        .catch(() => {});
+    };
+    fetchPendingAliados();
+    // Revisar cada 2 minutos
+    const id = setInterval(fetchPendingAliados, 120_000);
+    return () => clearInterval(id);
+  }, [pathname]);
+
+  // Cerrar menú móvil al cambiar de ruta
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   const isActive = (path: string) => {
@@ -56,13 +84,13 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     return pathname === path || pathname.startsWith(path + "/");
   };
 
-  const nav = NAV_ITEMS(pendingReportes, unreadMessages);
+  const nav = NAV_ITEMS(pendingReportes, unreadMessages, pendingAliados);
 
   const NavLinks = ({ onLinkClick }: { onLinkClick?: () => void }) => (
     <>
       <nav className="space-y-1">
         {nav.map((item) => {
-          const Icon = item.icon;
+          const Icon   = item.icon;
           const active = isActive(item.href);
           return (
             <Link
@@ -102,14 +130,16 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     </>
   );
 
+  const totalBadges = pendingReportes + unreadMessages + pendingAliados;
+
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* ── Desktop Sidebar ─────────────────────────────────────────────── */}
+      {/* ── Desktop Sidebar ────────────────────────────────────────────────── */}
       <aside className="w-64 bg-white border-r min-h-screen p-6 hidden md:block shrink-0">
         <NavLinks />
       </aside>
 
-      {/* ── Mobile overlay ──────────────────────────────────────────────── */}
+      {/* ── Mobile overlay ─────────────────────────────────────────────────── */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/40 md:hidden"
@@ -117,12 +147,11 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
         />
       )}
 
-      {/* ── Mobile Drawer ────────────────────────────────────────────────── */}
+      {/* ── Mobile Drawer ──────────────────────────────────────────────────── */}
       <div className={cn(
         "fixed top-0 left-0 h-full w-72 bg-white z-50 shadow-2xl transition-transform duration-300 md:hidden flex flex-col p-6",
         mobileOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        {/* Drawer header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-[#881a1d] rounded-lg flex items-center justify-center">
@@ -140,7 +169,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
         <NavLinks onLinkClick={() => setMobileOpen(false)} />
       </div>
 
-      {/* ── Main content ─────────────────────────────────────────────────── */}
+      {/* ── Main content ───────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile top bar */}
         <header className="md:hidden sticky top-0 z-30 bg-white border-b px-4 py-3 flex items-center gap-3">
@@ -156,16 +185,21 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
               {nav.find((n) => isActive(n.href))?.title ?? "Admin Panel"}
             </span>
           </div>
-          {/* Badge totals in top bar */}
-          {(pendingReportes > 0 || unreadMessages > 0) && (
+          {/* Badges totales en la top bar */}
+          {totalBadges > 0 && (
             <div className="flex items-center gap-1">
+              {pendingAliados > 0 && (
+                <span className="bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {pendingAliados}
+                </span>
+              )}
               {pendingReportes > 0 && (
                 <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                   {pendingReportes}
                 </span>
               )}
               {unreadMessages > 0 && (
-                <span className="bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                <span className="bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                   {unreadMessages}
                 </span>
               )}
