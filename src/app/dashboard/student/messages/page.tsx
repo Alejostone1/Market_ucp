@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Send, Search, MoreVertical } from "lucide-react";
+import { Send, Search, MoreVertical, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -105,6 +105,7 @@ function MessagesContent() {
   const handleSelectChat = async (conv: Conversacion) => {
     setSelectedChat(conv);
     setChatMessages([]);
+    // On mobile, selecting a chat shows the chat panel (list hides via CSS)
     await fetchMensajes(conv.id);
   };
 
@@ -148,8 +149,8 @@ function MessagesContent() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Mensajes</h1>
-      <p className="text-gray-600 mb-4">Conversa con compradores y vendedores</p>
+      <h1 className="text-2xl font-bold text-gray-900 mb-1">Mensajes</h1>
+      <p className="text-gray-600 mb-3 text-sm">Conversa con compradores y vendedores</p>
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -157,9 +158,9 @@ function MessagesContent() {
         </div>
       ) : (
         <Card className="border-0 shadow-lg rounded-xl overflow-hidden">
-          <div className="grid md:grid-cols-12 h-[calc(100vh-16rem)]">
-            {/* Lista de conversaciones */}
-            <div className="md:col-span-4 border-r bg-white flex flex-col">
+          <div className="grid md:grid-cols-12 h-[calc(100vh-16rem)] min-h-[400px]">
+            {/* Lista de conversaciones — hidden on mobile when chat is open */}
+            <div className={`md:col-span-4 border-r bg-white flex flex-col ${selectedChat ? "hidden md:flex" : "flex"}`}>
               <div className="p-4 border-b">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -212,23 +213,31 @@ function MessagesContent() {
               </ScrollArea>
             </div>
 
-            {/* Área de chat */}
-            <div className="md:col-span-8 flex flex-col bg-gray-50 min-h-0 overflow-hidden">
+            {/* Área de chat — full width on mobile when selected */}
+            <div className={`md:col-span-8 flex flex-col bg-gray-50 min-h-0 overflow-hidden ${selectedChat ? "flex" : "hidden md:flex"}`}>
               {selectedChat ? (
                 <>
                   {/* Header del chat */}
-                  <div className="p-4 bg-white border-b flex items-center justify-between shrink-0">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-10 h-10">
+                  <div className="p-3 sm:p-4 bg-white border-b flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      {/* Mobile back button */}
+                      <button
+                        onClick={() => setSelectedChat(null)}
+                        className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 shrink-0"
+                        aria-label="Volver"
+                      >
+                        <ArrowLeft className="w-5 h-5" />
+                      </button>
+                      <Avatar className="w-9 h-9 sm:w-10 sm:h-10 shrink-0">
                         <AvatarImage src={selectedChat.otherUser.avatarUrl || undefined} />
                         <AvatarFallback>{selectedChat.otherUser.nombre[0]}</AvatarFallback>
                       </Avatar>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{selectedChat.otherUser.nombre}</h3>
-                        <p className="text-xs text-gray-500">{selectedChat.otherUser.correo}</p>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-gray-900 text-sm truncate">{selectedChat.otherUser.nombre}</h3>
+                        <p className="text-xs text-gray-500 hidden sm:block truncate">{selectedChat.otherUser.correo}</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="rounded-full">
+                    <Button variant="ghost" size="icon" className="rounded-full shrink-0">
                       <MoreVertical className="w-5 h-5" />
                     </Button>
                   </div>

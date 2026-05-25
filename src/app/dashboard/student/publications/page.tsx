@@ -418,16 +418,16 @@ const ProductRow = ({ product }: { product: Publicacion }) => (
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
             Mis Publicaciones
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-sm">
             Administra tus productos y servicios publicados
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <div className="flex items-center bg-white border rounded-lg p-1">
             <Button
               variant={viewMode === "grid" ? "default" : "ghost"}
@@ -446,10 +446,10 @@ const ProductRow = ({ product }: { product: Publicacion }) => (
               <LayoutGrid className="w-4 h-4" />
             </Button>
           </div>
-          <Link href="/dashboard/student/publications/new">
-            <Button className="bg-ucp-rojo hover:bg-red-700 rounded-full text-white">
-              <Plus className="w-5 h-5 mr-2" />
-              Nueva Publicación
+          <Link href="/dashboard/student/publications/new" className="flex-1 sm:flex-none">
+            <Button className="bg-ucp-rojo hover:bg-red-700 rounded-full text-white w-full sm:w-auto">
+              <Plus className="w-4 h-4 mr-1.5" />
+              <span className="hidden xs:inline">Nueva </span>Publicación
             </Button>
           </Link>
         </div>
@@ -462,7 +462,7 @@ const ProductRow = ({ product }: { product: Publicacion }) => (
       ) : (
         <>
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
             <Card className="border-0 shadow-lg rounded-xl">
               <CardContent className="p-6 text-center">
                 <div className="text-3xl font-bold text-ucp-rojo mb-1">{publicaciones.length}</div>
@@ -491,20 +491,22 @@ const ProductRow = ({ product }: { product: Publicacion }) => (
 
           {/* Tabs */}
           <Tabs defaultValue="all" className="w-full">
-            <TabsList className="mb-6 bg-white border rounded-lg p-1">
-              <TabsTrigger value="all" className="rounded-md">
-                Todas ({publicaciones.length})
-              </TabsTrigger>
-              <TabsTrigger value="approved" className="rounded-md">
-                Publicadas ({approvedProducts.length})
-              </TabsTrigger>
-              <TabsTrigger value="pending" className="rounded-md">
-                Pendientes ({pendingProducts.length})
-              </TabsTrigger>
-              <TabsTrigger value="rejected" className="rounded-md">
-                Rechazadas ({rejectedProducts.length})
-              </TabsTrigger>
-            </TabsList>
+            <div className="overflow-x-auto mb-4">
+              <TabsList className="bg-white border rounded-lg p-1 inline-flex min-w-full sm:min-w-0 w-max sm:w-auto">
+                <TabsTrigger value="all" className="rounded-md text-xs sm:text-sm whitespace-nowrap">
+                  Todas ({publicaciones.length})
+                </TabsTrigger>
+                <TabsTrigger value="approved" className="rounded-md text-xs sm:text-sm whitespace-nowrap">
+                  Publicadas ({approvedProducts.length})
+                </TabsTrigger>
+                <TabsTrigger value="pending" className="rounded-md text-xs sm:text-sm whitespace-nowrap">
+                  Pendientes ({pendingProducts.length})
+                </TabsTrigger>
+                <TabsTrigger value="rejected" className="rounded-md text-xs sm:text-sm whitespace-nowrap">
+                  Rechazadas ({rejectedProducts.length})
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="all">
               <div className={viewMode === "grid" ? "space-y-4" : "grid sm:grid-cols-2 lg:grid-cols-3 gap-6"}>

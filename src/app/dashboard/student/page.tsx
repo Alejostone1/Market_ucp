@@ -99,10 +99,10 @@ export default function StudentDashboardPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">
-        Bienvenido, {usuario?.nombre || 'Estudiante'}
+      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
+        Bienvenido, {usuario?.nombre?.split(" ")[0] || 'Estudiante'} 👋
       </h1>
-      <p className="text-gray-600 mb-8">
+      <p className="text-gray-600 mb-5 text-sm">
         Resumen de tu actividad en UCP Marketplace
       </p>
 
@@ -113,42 +113,42 @@ export default function StudentDashboardPage() {
       ) : (
         <>
           {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <Card className="border-0 shadow-lg rounded-xl hover:shadow-lg transition-shadow cursor-pointer">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                    <Package className="w-6 h-6 text-ucp-rojo" />
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            <Card className="border-0 shadow-lg rounded-xl">
+              <CardContent className="p-3 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-center sm:gap-4 gap-1 text-center sm:text-left">
+                  <div className="w-9 h-9 sm:w-12 sm:h-12 bg-red-100 rounded-full flex items-center justify-center shrink-0">
+                    <Package className="w-4 h-4 sm:w-6 sm:h-6 text-ucp-rojo" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-gray-900">{publicaciones.length}</div>
-                    <div className="text-gray-600">Publicaciones</div>
+                    <div className="text-xl sm:text-2xl font-bold text-gray-900">{publicaciones.length}</div>
+                    <div className="text-gray-600 text-xs sm:text-sm">Publicaciones</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-lg rounded-xl hover:shadow-lg transition-shadow cursor-pointer">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <MessageSquare className="w-6 h-6 text-blue-600" />
+            <Card className="border-0 shadow-lg rounded-xl">
+              <CardContent className="p-3 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-center sm:gap-4 gap-1 text-center sm:text-left">
+                  <div className="w-9 h-9 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
+                    <MessageSquare className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-gray-900">{mensajesNuevos}</div>
-                    <div className="text-gray-600">Mensajes</div>
+                    <div className="text-xl sm:text-2xl font-bold text-gray-900">{mensajesNuevos}</div>
+                    <div className="text-gray-600 text-xs sm:text-sm">Mensajes</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-lg rounded-xl hover:shadow-lg transition-shadow cursor-pointer">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-ucp-verde" />
+            <Card className="border-0 shadow-lg rounded-xl">
+              <CardContent className="p-3 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-center sm:gap-4 gap-1 text-center sm:text-left">
+                  <div className="w-9 h-9 sm:w-12 sm:h-12 bg-green-100 rounded-full flex items-center justify-center shrink-0">
+                    <User className="w-4 h-4 sm:w-6 sm:h-6 text-ucp-verde" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-gray-900">{publicacionesActivas}</div>
-                    <div className="text-gray-600">Activas</div>
+                    <div className="text-xl sm:text-2xl font-bold text-gray-900">{publicacionesActivas}</div>
+                    <div className="text-gray-600 text-xs sm:text-sm">Activas</div>
                   </div>
                 </div>
               </CardContent>

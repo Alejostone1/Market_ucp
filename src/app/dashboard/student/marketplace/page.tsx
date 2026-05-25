@@ -265,10 +265,10 @@ export default function MarketplacePage() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5 sm:mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Marketplace</h1>
-          <p className="text-gray-600">Descubre productos y servicios de la comunidad UCP</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Marketplace</h1>
+          <p className="text-gray-600 text-sm sm:text-base">Descubre productos y servicios de la comunidad UCP</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -443,11 +443,11 @@ export default function MarketplacePage() {
 
       {/* Resultados */}
       {publicaciones.length === 0 ? (
-        <Card className="border-0 shadow-lg rounded-xl p-16 text-center">
-          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <ShoppingBag className="w-12 h-12 text-gray-400" />
+        <Card className="border-0 shadow-lg rounded-xl p-8 sm:p-16 text-center">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ShoppingBag className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400" />
           </div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">No se encontraron publicaciones</h2>
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">No se encontraron publicaciones</h2>
           <p className="text-gray-600 mb-8">Intenta ajustar los filtros de búsqueda</p>
           <Button
             onClick={() => {
@@ -589,10 +589,10 @@ export default function MarketplacePage() {
                 </div>
               ) : (
                 /* Vista Lista */
-                <div className="p-6">
-                  <div className="flex gap-4">
+                <div className="p-4 sm:p-6">
+                  <div className="flex gap-3 sm:gap-4">
                     <Link href={`/publication/${publicacion.id}`} className="flex-shrink-0">
-                      <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden cursor-pointer">
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg overflow-hidden cursor-pointer">
                         {publicacion.medios.length > 0 ? (
                           <img
                             src={publicacion.medios[0].url}
@@ -635,10 +635,10 @@ export default function MarketplacePage() {
                           </div>
                         </div>
 
-                        <div className="text-right ml-4">
+                        <div className="text-right ml-2 sm:ml-4 shrink-0">
                           {publicacion.precio ? (
                             <div>
-                              <p className="text-lg font-bold text-ucp-rojo">
+                              <p className="text-base sm:text-lg font-bold text-ucp-rojo">
                                 {formatearPrecio(publicacion.precio)}
                               </p>
                               {publicacion.tipoPrecio && publicacion.tipoPrecio !== 'FIJO' && (
@@ -646,10 +646,10 @@ export default function MarketplacePage() {
                               )}
                             </div>
                           ) : (
-                            <p className="text-lg font-bold text-green-600">Gratis</p>
+                            <p className="text-base sm:text-lg font-bold text-green-600">Gratis</p>
                           )}
 
-                          <div className="flex gap-2 mt-2">
+                          <div className="flex gap-1 sm:gap-2 mt-2 justify-end">
                             <Link href={`/publication/${publicacion.id}`}>
                               <Button variant="outline" size="icon" className="rounded-full" title="Ver detalles">
                                 <Eye className="w-4 h-4" />

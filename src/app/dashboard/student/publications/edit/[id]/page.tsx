@@ -173,7 +173,7 @@ export default function EditPublicationPage() {
         Volver
       </Button>
 
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Editar Publicación</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Editar Publicación</h1>
       <p className="text-gray-600 mb-8">
         Actualiza la información de tu publicación
       </p>

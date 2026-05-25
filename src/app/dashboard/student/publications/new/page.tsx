@@ -212,7 +212,7 @@ export default function NewPublicationPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Nueva Publicación</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Nueva Publicación</h1>
             <p className="text-gray-600 text-sm mt-0.5">
               Publica tu producto, servicio o evento en el marketplace UCP
             </p>
@@ -489,7 +489,16 @@ export default function NewPublicationPage() {
           </Card>
 
           {/* Actions */}
-          <div className="flex gap-3">
+          <div className="flex flex-col-reverse sm:flex-row gap-3">
+            <Link href="/dashboard/student/publications" className="w-full sm:w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full rounded-xl px-8 py-3 font-semibold"
+              >
+                Cancelar
+              </Button>
+            </Link>
             <Button
               type="submit"
               disabled={isSubmitting || !usuario?.id}
@@ -507,15 +516,6 @@ export default function NewPublicationPage() {
                 </>
               )}
             </Button>
-            <Link href="/dashboard/student/publications">
-              <Button
-                type="button"
-                variant="outline"
-                className="rounded-xl px-8 py-3 font-semibold"
-              >
-                Cancelar
-              </Button>
-            </Link>
           </div>
         </form>
       </div>

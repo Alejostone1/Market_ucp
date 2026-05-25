@@ -160,7 +160,7 @@ export default function NotificationsPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Encabezado */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Bell className="w-6 h-6 text-ucp-rojo" />
@@ -179,7 +179,7 @@ export default function NotificationsPage() {
           <Button
             variant="outline"
             size="sm"
-            className="rounded-full gap-1.5"
+            className="rounded-full gap-1.5 w-full sm:w-auto"
             onClick={markAllAsRead}
             disabled={markingAll}
           >

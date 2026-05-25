@@ -312,12 +312,12 @@ export default function CartPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Mi Carrito</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Mi Carrito</h1>
             <p className="text-gray-600">Gestiona tus productos seleccionados</p>
           </div>
         </div>
 
-        <Card className="border-0 shadow-lg rounded-xl p-16 text-center">
+        <Card className="border-0 shadow-lg rounded-xl p-8 sm:p-16 text-center">
           <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <ShoppingBag className="w-12 h-12 text-gray-400" />
           </div>
@@ -348,7 +348,7 @@ export default function CartPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Mi Carrito</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Mi Carrito</h1>
           <p className="text-gray-600">
             {carritoItems.length}{" "}
             {carritoItems.length === 1 ? "producto" : "productos"} en tu carrito

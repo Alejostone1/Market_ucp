@@ -158,35 +158,35 @@ export default function ProfilePage() {
       </div>
 
       {/* Profile Header */}
-      <Card className="border-0 shadow-lg rounded-xl mb-8">
-        <CardContent className="p-8">
-          <div className="flex flex-col md:flex-row gap-8">
-            <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
+      <Card className="border-0 shadow-lg rounded-xl mb-6">
+        <CardContent className="p-4 sm:p-8">
+          <div className="flex flex-col sm:flex-row gap-5 sm:gap-8">
+            <Avatar className="w-20 h-20 sm:w-32 sm:h-32 border-4 border-white shadow-lg self-start">
               <AvatarImage src={usuario.avatarUrl || undefined} />
-              <AvatarFallback className="text-3xl">{usuario.nombre[0]}</AvatarFallback>
+              <AvatarFallback className="text-2xl sm:text-3xl">{usuario.nombre[0]}</AvatarFallback>
             </Avatar>
 
-            <div className="flex-1">
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+                <div className="min-w-0">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 truncate">
                     {usuario.nombre}
                   </h1>
-                  <div className="flex items-center gap-2 text-gray-600 mb-2">
-                    <MapPin className="w-5 h-5" />
-                    <span>{usuario.facultad || 'No especificado'}</span>
+                  <div className="flex items-center gap-2 text-gray-600 mb-1.5 text-sm">
+                    <MapPin className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{usuario.facultad || 'No especificado'}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-ucp-verde">
-                    <Shield className="w-5 h-5" />
+                  <div className="flex items-center gap-2 text-ucp-verde text-sm">
+                    <Shield className="w-4 h-4 shrink-0" />
                     <span className="font-medium">Estudiante verificado UCP</span>
                   </div>
                 </div>
 
                 <Button
                   onClick={() => setEditing(!editing)}
-                  className="bg-ucp-rojo hover:bg-red-700 rounded-full text-white"
+                  className="bg-ucp-rojo hover:bg-red-700 rounded-full text-white shrink-0 self-start"
                 >
-                  <Edit className="w-5 h-5 mr-2" />
+                  <Edit className="w-4 h-4 mr-2" />
                   {editing ? 'Cancelar' : 'Editar Perfil'}
                 </Button>
               </div>
