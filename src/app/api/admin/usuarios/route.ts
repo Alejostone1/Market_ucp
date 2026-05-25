@@ -35,17 +35,18 @@ const patchSchema = z.object({
 // ── SELECT helper (shared shape) ─────────────────────────────────────────────
 
 const USUARIO_SELECT = {
-  id: true,
-  nombre: true,
-  correo: true,
-  rol: true,
-  facultad: true,
-  semestre: true,
-  avatarUrl: true,
-  telefono: true,
-  bloqueado: true,
-  verificado: true,
-  creadoEn: true,
+  id:            true,
+  nombre:        true,
+  correo:        true,
+  rol:           true,
+  facultad:      true,
+  semestre:      true,
+  avatarUrl:     true,
+  telefono:      true,
+  bloqueado:     true,
+  verificado:    true,
+  motivoBloqueo: true,
+  creadoEn:      true,
   _count: { select: { publicaciones: true } },
 } as const;
 
@@ -184,7 +185,7 @@ export async function PATCH(request: Request) {
       );
     }
 
-    // Destructure motivo separately — it's not a DB column
+    // Destructure motivo separately — used to build motivoBloqueo
     const { id, motivo, ...data } = parsed.data;
 
     // Verificar que el usuario existe
@@ -206,28 +207,41 @@ export async function PATCH(request: Request) {
       }
     }
 
+    // ── Lógica de motivoBloqueo ───────────────────────────────────────────────
+    const dataToSave: Record<string, unknown> = { ...data };
+
+    if (typeof data.bloqueado === 'boolean') {
+      if (data.bloqueado) {
+        // Al bloquear: guardar motivo en el campo
+        dataToSave.motivoBloqueo = motivo?.trim() || null;
+      } else {
+        // Al desbloquear: limpiar motivo
+        dataToSave.motivoBloqueo = null;
+      }
+    }
+
     const usuario = await prisma.usuario.update({
-      where: { id },
-      data,
+      where:  { id },
+      data:   dataToSave,
       select: USUARIO_SELECT,
     });
 
-    // Si se está cambiando el estado de bloqueo, crear una notificación para el usuario
+    // ── Notificación de cambio de bloqueo ─────────────────────────────────────
     const cambiandoBloqueo = typeof data.bloqueado === 'boolean' && data.bloqueado !== existente.bloqueado;
     if (cambiandoBloqueo) {
-      const mensajeBloqueo = data.bloqueado
+      const mensajeNotif = data.bloqueado
         ? `Tu cuenta ha sido suspendida.${motivo ? ` Motivo: ${motivo}` : ''} Contacta a admin@ucp.edu.co para más información.`
-        : `Tu cuenta ha sido reactivada.${motivo ? ` Nota: ${motivo}` : ''} Ya puedes acceder al marketplace.`;
+        : `Tu cuenta ha sido reactivada. Ya puedes acceder al marketplace.`;
 
       await prisma.notificacion.create({
         data: {
           usuarioId:    id,
           tipo:         data.bloqueado ? 'PUBLICACION_SUSPENDIDA' : 'PUBLICACION_APROBADA',
           referenciaId: id,
-          mensaje:      mensajeBloqueo,
+          mensaje:      mensajeNotif,
           leida:        false,
         },
-      }).catch(() => null); // No fallar si la notificación no se puede crear
+      }).catch(() => null);
     }
 
     return NextResponse.json(usuario);

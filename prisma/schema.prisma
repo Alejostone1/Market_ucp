@@ -27,6 +27,7 @@ model Usuario {
 
   verificado    Boolean  @default(false)
   bloqueado     Boolean  @default(false)
+  motivoBloqueo String?
 
   publicaciones        Publicacion[]
   favoritos            Favorito[]

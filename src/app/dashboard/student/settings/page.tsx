@@ -6,36 +6,50 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { Settings, Lock, User } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
-  const { usuario } = useAuth();
+  const { usuario, updateUsuario } = useAuth();
 
   const [profileForm, setProfileForm] = useState({
-    nombre: usuario?.nombre || "",
-    telefono: usuario?.telefono || "",
-    facultad: usuario?.facultad || "",
+    nombre:   usuario?.nombre   ?? "",
+    telefono: usuario?.telefono ?? "",
+    facultad: usuario?.facultad ?? "",
   });
   const [savingProfile, setSavingProfile] = useState(false);
 
   const [passwordForm, setPasswordForm] = useState({
-    actual: "",
-    nueva: "",
+    actual:    "",
+    nueva:     "",
     confirmar: "",
   });
   const [savingPassword, setSavingPassword] = useState(false);
 
+  // ── Guardar datos del perfil ─────────────────────────────────────────────────
   const handleSaveProfile = async () => {
     if (!usuario?.id) return;
     setSavingProfile(true);
     try {
       const res = await fetch(`/api/usuarios/${usuario.id}`, {
-        method: "PATCH",
+        method:  "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profileForm),
+        body:    JSON.stringify({
+          nombre:   profileForm.nombre.trim()   || undefined,
+          telefono: profileForm.telefono.trim() || null,
+          facultad: profileForm.facultad.trim() || null,
+        }),
       });
       if (!res.ok) throw new Error();
+
+      // Sincronizar AuthContext con los nuevos datos
+      updateUsuario({
+        nombre:   profileForm.nombre.trim()   || usuario.nombre,
+        telefono: profileForm.telefono.trim() || null,
+        facultad: profileForm.facultad.trim() || null,
+      });
+
       toast.success("Perfil actualizado correctamente");
     } catch {
       toast.error("Error al actualizar el perfil");
@@ -44,6 +58,7 @@ export default function SettingsPage() {
     }
   };
 
+  // ── Cambiar contraseña ────────────────────────────────────────────────────────
   const handleChangePassword = async () => {
     if (passwordForm.nueva !== passwordForm.confirmar) {
       toast.error("Las contraseñas nuevas no coinciden");
@@ -55,13 +70,13 @@ export default function SettingsPage() {
     }
     setSavingPassword(true);
     try {
-      const res = await fetch(`/api/auth/change-password`, {
-        method: "POST",
+      const res = await fetch("/api/auth/change-password", {
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          usuarioId: usuario?.id,
+        body:    JSON.stringify({
+          usuarioId:       usuario?.id,
           contrasenaActual: passwordForm.actual,
-          contrasenaNueva: passwordForm.nueva,
+          contrasenaNueva:  passwordForm.nueva,
         }),
       });
       const data = await res.json();
@@ -75,18 +90,44 @@ export default function SettingsPage() {
     }
   };
 
+  if (!usuario) return null;
+
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
         <Settings className="w-7 h-7 text-ucp-rojo" />
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
-          <p className="text-gray-500 text-sm">Administra tu cuenta</p>
+          <p className="text-gray-500 text-sm">Administra tu cuenta y perfil</p>
         </div>
       </div>
 
       <div className="space-y-6 max-w-lg">
-        {/* Datos personales */}
+
+        {/* ── Foto de perfil ─────────────────────────────────────────────────── */}
+        <Card className="border-0 shadow-md rounded-xl">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-5">
+              <User className="w-5 h-5 text-ucp-rojo" />
+              <h2 className="text-lg font-semibold text-gray-900">Foto de perfil</h2>
+            </div>
+
+            <div className="flex justify-center">
+              <AvatarUpload
+                currentUrl={usuario.avatarUrl}
+                name={usuario.nombre}
+                usuarioId={usuario.id}
+                size="lg"
+                onSuccess={(newUrl) => {
+                  // Actualizar AuthContext para que el avatar se propague a todo el app
+                  updateUsuario({ avatarUrl: newUrl || null });
+                }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── Datos personales ───────────────────────────────────────────────── */}
         <Card className="border-0 shadow-md rounded-xl">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-4">
@@ -112,7 +153,7 @@ export default function SettingsPage() {
                 />
               </div>
               <div>
-                <Label>Facultad</Label>
+                <Label>Facultad / Programa</Label>
                 <Input
                   value={profileForm.facultad}
                   onChange={(e) => setProfileForm({ ...profileForm, facultad: e.target.value })}
@@ -121,9 +162,13 @@ export default function SettingsPage() {
                 />
               </div>
               <div>
-                <Label>Correo</Label>
-                <Input value={usuario?.correo || ""} disabled className="rounded-full mt-1 bg-gray-50" />
-                <p className="text-xs text-gray-400 mt-1">El correo institucional no se puede cambiar.</p>
+                <Label>Correo electrónico</Label>
+                <Input
+                  value={usuario.correo}
+                  disabled
+                  className="rounded-full mt-1 bg-gray-50 text-gray-500"
+                />
+                <p className="text-xs text-gray-400 mt-1">El correo no se puede cambiar.</p>
               </div>
               <Button
                 onClick={handleSaveProfile}
@@ -136,7 +181,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Cambio de contraseña */}
+        {/* ── Cambio de contraseña ───────────────────────────────────────────── */}
         <Card className="border-0 shadow-md rounded-xl">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-4">

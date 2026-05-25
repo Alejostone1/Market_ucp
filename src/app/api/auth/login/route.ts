@@ -26,24 +26,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar si el usuario está bloqueado
+    // ── Verificar bloqueo ────────────────────────────────────────────────────
     if (usuario.bloqueado) {
-      // Buscar la última notificación de bloqueo para obtener el motivo
-      const notifBloqueo = await prisma.notificacion.findFirst({
-        where: { usuarioId: usuario.id, tipo: 'PUBLICACION_SUSPENDIDA' },
-        orderBy: { creadoEn: 'desc' },
-      }).catch(() => null);
+      const mensajeBloqueo = usuario.motivoBloqueo
+        ? `Tu cuenta ha sido suspendida. Motivo: ${usuario.motivoBloqueo}. Contacta a admin@ucp.edu.co para más información.`
+        : "Tu cuenta ha sido suspendida. Contacta al administrador en admin@ucp.edu.co para más información.";
 
-      const mensajeBloqueo = notifBloqueo?.mensaje
-        ?? "Tu cuenta ha sido suspendida. Contacta al administrador en admin@ucp.edu.co para más información.";
-
-      return NextResponse.json(
-        { message: mensajeBloqueo },
-        { status: 403 }
-      );
+      return NextResponse.json({ message: mensajeBloqueo }, { status: 403 });
     }
 
-    // Verificar contraseña
+    // ── Verificar contraseña ────────────────────────────────────────────────
     const contrasenaValida = await bcrypt.compare(contrasena, usuario.contrasena);
 
     if (!contrasenaValida) {
@@ -53,10 +45,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar si el usuario está verificado / aprobado
+    // ── Verificar estado de verificación / aprobación ───────────────────────
     if (!usuario.verificado) {
-      // Mensaje diferenciado: aliados esperan aprobación del admin,
-      // estudiantes necesitarían verificar correo (flujo futuro).
       const message =
         usuario.rol === "ALIADO"
           ? "Tu cuenta está pendiente de aprobación por el administrador. Te notificaremos cuando sea aprobada."
@@ -68,21 +58,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Retornar datos del usuario (sin contraseña)
-    const { contrasena: _, ...usuarioSinContrasena } = usuario;
+    // ── Construir sesión (sin contraseña ni motivoBloqueo) ───────────────────
+    const {
+      contrasena: _pwd,
+      motivoBloqueo: _motivo,
+      ...usuarioSesion
+    } = usuario;
 
     const response = NextResponse.json({
       message: "Inicio de sesión exitoso",
-      usuario: usuarioSinContrasena,
+      usuario: usuarioSesion,
     });
 
-    // Setear cookie desde el servidor para que esté disponible en API routes
-    response.cookies.set("usuario", encodeURIComponent(JSON.stringify(usuarioSinContrasena)), {
-      path: "/",
-      maxAge: 604800,
-      httpOnly: false,
-      sameSite: "lax",
-    });
+    response.cookies.set(
+      "usuario",
+      encodeURIComponent(JSON.stringify(usuarioSesion)),
+      { path: "/", maxAge: 604800, httpOnly: false, sameSite: "lax" }
+    );
 
     return response;
   } catch (error) {

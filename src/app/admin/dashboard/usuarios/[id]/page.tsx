@@ -3,9 +3,9 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
-  ArrowLeft, Mail, Phone, MapPin, Calendar,
-  Package, Pencil, Lock, Unlock, UserCheck, UserX,
-  Loader2, BookOpen, Shield,
+  ArrowLeft, Mail, Phone, MapPin, Calendar, Package,
+  Pencil, Lock, Unlock, UserCheck, UserX, Loader2,
+  BookOpen, Shield, AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -28,42 +29,44 @@ import { toast } from "sonner";
 type Rol = "ESTUDIANTE" | "ALIADO" | "ADMIN";
 
 interface UsuarioDetalle {
-  id: string;
-  nombre: string;
-  correo: string;
-  rol: Rol;
-  facultad: string | null;
-  semestre: number | null;
-  avatarUrl: string | null;
-  telefono: string | null;
-  bloqueado: boolean;
-  verificado: boolean;
-  creadoEn: string;
+  id:            string;
+  nombre:        string;
+  correo:        string;
+  rol:           Rol;
+  facultad:      string | null;
+  semestre:      number | null;
+  avatarUrl:     string | null;
+  telefono:      string | null;
+  bloqueado:     boolean;
+  verificado:    boolean;
+  motivoBloqueo: string | null;
+  creadoEn:      string;
   _count: { publicaciones: number };
 }
 
 interface Publicacion {
-  id: string;
-  titulo: string;
+  id:         string;
+  titulo:     string;
   descripcion: string;
-  tipo: string;
-  estado: string;
-  precio: number | null;
-  tipoPrecio: string | null;
-  categoria: { id: string; nombre: string; color: string };
-  medios: { id: string; url: string }[];
-  creadoEn: string;
+  tipo:        string;
+  estado:      string;
+  precio:      number | null;
+  tipoPrecio:  string | null;
+  categoria:   { id: string; nombre: string; color: string };
+  medios:      { id: string; url: string }[];
+  creadoEn:    string;
 }
 
 interface FormState {
-  nombre: string;
-  correo: string;
-  rol: "ESTUDIANTE" | "ALIADO";
-  facultad: string;
-  semestre: string;
-  telefono: string;
-  verificado: boolean;
-  bloqueado: boolean;
+  nombre:        string;
+  correo:        string;
+  rol:           "ESTUDIANTE" | "ALIADO";
+  facultad:      string;
+  semestre:      string;
+  telefono:      string;
+  verificado:    boolean;
+  bloqueado:     boolean;
+  motivoBloqueo: string;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -77,7 +80,7 @@ function RolBadge({ rol }: { rol: Rol }) {
 }
 
 function EstadoBadge({ bloqueado, verificado }: { bloqueado: boolean; verificado: boolean }) {
-  if (bloqueado) return <Badge className="bg-red-100 text-red-700 border-red-200 border font-medium">Bloqueado</Badge>;
+  if (bloqueado)  return <Badge className="bg-red-100 text-red-700 border-red-200 border font-medium">Bloqueado</Badge>;
   if (verificado) return <Badge className="bg-green-100 text-green-700 border-green-200 border font-medium">Verificado</Badge>;
   return <Badge className="bg-gray-100 text-gray-600 border-gray-200 border font-medium">Sin verificar</Badge>;
 }
@@ -94,50 +97,55 @@ function EstadoPubBadge({ estado }: { estado: string }) {
     APROBADA: "Aprobada", PENDIENTE: "Pendiente",
     RECHAZADA: "Rechazada", ARCHIVADA: "Archivada", SUSPENDIDA: "Suspendida",
   };
-  return <Badge className={`font-medium text-xs ${map[estado] ?? "bg-gray-100 text-gray-700"}`}>{labels[estado] ?? estado}</Badge>;
+  return (
+    <Badge className={`font-medium text-xs ${map[estado] ?? "bg-gray-100 text-gray-700"}`}>
+      {labels[estado] ?? estado}
+    </Badge>
+  );
 }
 
 function formatPrice(p: number | null, tipo: string | null) {
   if (!p) return "Gratis";
   const f = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(Number(p));
-  if (tipo === "POR_HORA") return `${f}/hora`;
-  return f;
+  return tipo === "POR_HORA" ? `${f}/hora` : f;
 }
 
 // ── Edit Modal ────────────────────────────────────────────────────────────────
 
 interface EditModalProps {
-  usuario: UsuarioDetalle;
-  open: boolean;
-  onClose: () => void;
+  usuario:   UsuarioDetalle;
+  open:      boolean;
+  onClose:   () => void;
   onSuccess: (u: UsuarioDetalle) => void;
 }
 
 function EditModal({ usuario, open, onClose, onSuccess }: EditModalProps) {
   const [form, setForm] = useState<FormState>({
-    nombre: usuario.nombre,
-    correo: usuario.correo,
-    rol: usuario.rol === "ADMIN" ? "ESTUDIANTE" : (usuario.rol as "ESTUDIANTE" | "ALIADO"),
-    facultad: usuario.facultad ?? "",
-    semestre: usuario.semestre?.toString() ?? "",
-    telefono: usuario.telefono ?? "",
-    verificado: usuario.verificado,
-    bloqueado: usuario.bloqueado,
+    nombre:        usuario.nombre,
+    correo:        usuario.correo,
+    rol:           usuario.rol === "ADMIN" ? "ESTUDIANTE" : (usuario.rol as "ESTUDIANTE" | "ALIADO"),
+    facultad:      usuario.facultad   ?? "",
+    semestre:      usuario.semestre?.toString() ?? "",
+    telefono:      usuario.telefono   ?? "",
+    verificado:    usuario.verificado,
+    bloqueado:     usuario.bloqueado,
+    motivoBloqueo: usuario.motivoBloqueo ?? "",
   });
-  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+  const [errors,     setErrors]     = useState<Partial<Record<keyof FormState, string>>>({});
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
       setForm({
-        nombre: usuario.nombre,
-        correo: usuario.correo,
-        rol: usuario.rol === "ADMIN" ? "ESTUDIANTE" : (usuario.rol as "ESTUDIANTE" | "ALIADO"),
-        facultad: usuario.facultad ?? "",
-        semestre: usuario.semestre?.toString() ?? "",
-        telefono: usuario.telefono ?? "",
-        verificado: usuario.verificado,
-        bloqueado: usuario.bloqueado,
+        nombre:        usuario.nombre,
+        correo:        usuario.correo,
+        rol:           usuario.rol === "ADMIN" ? "ESTUDIANTE" : (usuario.rol as "ESTUDIANTE" | "ALIADO"),
+        facultad:      usuario.facultad   ?? "",
+        semestre:      usuario.semestre?.toString() ?? "",
+        telefono:      usuario.telefono   ?? "",
+        verificado:    usuario.verificado,
+        bloqueado:     usuario.bloqueado,
+        motivoBloqueo: usuario.motivoBloqueo ?? "",
       });
       setErrors({});
     }
@@ -161,19 +169,28 @@ function EditModal({ usuario, open, onClose, onSuccess }: EditModalProps) {
     if (!validate()) return;
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/admin/usuarios/${usuario.id}`, {
-        method: "PATCH",
+      const payload: Record<string, unknown> = {
+        nombre:     form.nombre.trim(),
+        correo:     form.correo.toLowerCase().trim(),
+        rol:        form.rol,
+        facultad:   form.facultad.trim() || null,
+        semestre:   form.semestre ? parseInt(form.semestre) : null,
+        telefono:   form.telefono.trim() || null,
+        verificado: form.verificado,
+        bloqueado:  form.bloqueado,
+      };
+
+      // Solo enviar motivoBloqueo si está bloqueando
+      if (form.bloqueado) {
+        payload.motivoBloqueo = form.motivoBloqueo.trim() || null;
+      } else {
+        payload.motivoBloqueo = null;
+      }
+
+      const res  = await fetch(`/api/admin/usuarios/${usuario.id}`, {
+        method:  "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre: form.nombre.trim(),
-          correo: form.correo.toLowerCase().trim(),
-          rol: form.rol,
-          facultad: form.facultad.trim() || null,
-          semestre: form.semestre ? parseInt(form.semestre) : null,
-          telefono: form.telefono.trim() || null,
-          verificado: form.verificado,
-          bloqueado: form.bloqueado,
-        }),
+        body:    JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -193,7 +210,7 @@ function EditModal({ usuario, open, onClose, onSuccess }: EditModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent aria-describedby={undefined} className="max-w-lg rounded-2xl bg-white">
+      <DialogContent aria-describedby={undefined} className="max-w-lg rounded-2xl bg-white max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Editar usuario</DialogTitle>
         </DialogHeader>
@@ -223,7 +240,12 @@ function EditModal({ usuario, open, onClose, onSuccess }: EditModalProps) {
             </div>
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Semestre</Label>
-              <Input type="number" min={1} max={12} placeholder="1 – 12" value={form.semestre} onChange={(e) => set("semestre")(e.target.value)} className={errors.semestre ? "border-red-400" : ""} />
+              <Input
+                type="number" min={1} max={12} placeholder="1 – 12"
+                value={form.semestre}
+                onChange={(e) => set("semestre")(e.target.value)}
+                className={errors.semestre ? "border-red-400" : ""}
+              />
               {errors.semestre && <p className="text-xs text-red-500">{errors.semestre}</p>}
             </div>
           </div>
@@ -247,14 +269,33 @@ function EditModal({ usuario, open, onClose, onSuccess }: EditModalProps) {
               </div>
               <Switch checked={form.verificado} onCheckedChange={(v) => set("verificado")(v)} />
             </div>
-            <div className="flex items-center justify-between bg-red-50 rounded-xl px-4 py-3">
+            <div className={`flex items-center justify-between rounded-xl px-4 py-3 ${form.bloqueado ? "bg-red-50" : "bg-gray-50"}`}>
               <div>
-                <p className="text-sm font-medium text-red-800">Bloqueado</p>
-                <p className="text-xs text-red-500">Sin acceso</p>
+                <p className={`text-sm font-medium ${form.bloqueado ? "text-red-800" : "text-gray-800"}`}>Bloqueado</p>
+                <p className={`text-xs ${form.bloqueado ? "text-red-500" : "text-gray-500"}`}>Sin acceso</p>
               </div>
               <Switch checked={form.bloqueado} onCheckedChange={(v) => set("bloqueado")(v)} />
             </div>
           </div>
+
+          {/* Motivo de bloqueo — solo visible cuando se bloquea */}
+          {form.bloqueado && (
+            <div className="space-y-1.5 p-3 bg-red-50 rounded-xl border border-red-100">
+              <Label className="text-sm font-medium text-red-800">
+                Motivo del bloqueo
+                <span className="ml-1 text-xs font-normal text-red-500">(opcional)</span>
+              </Label>
+              <Textarea
+                placeholder="Describe el motivo del bloqueo..."
+                value={form.motivoBloqueo}
+                onChange={(e) => set("motivoBloqueo")(e.target.value)}
+                maxLength={500}
+                rows={3}
+                className="resize-none border-red-200 focus:border-red-400 bg-white"
+              />
+              <p className="text-xs text-red-400 text-right">{form.motivoBloqueo.length}/500</p>
+            </div>
+          )}
 
           <DialogFooter className="gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>Cancelar</Button>
@@ -263,6 +304,73 @@ function EditModal({ usuario, open, onClose, onSuccess }: EditModalProps) {
             </Button>
           </DialogFooter>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Block Dialog ──────────────────────────────────────────────────────────────
+
+interface BlockDialogProps {
+  nombre:    string;
+  open:      boolean;
+  onClose:   () => void;
+  onConfirm: (motivo: string) => void;
+  loading:   boolean;
+}
+
+function BlockDialog({ nombre, open, onClose, onConfirm, loading }: BlockDialogProps) {
+  const [motivo, setMotivo] = useState("");
+
+  useEffect(() => { if (open) setMotivo(""); }, [open]);
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent aria-describedby="block-desc" className="max-w-md rounded-2xl bg-white">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+            <Lock className="w-5 h-5 text-red-600" />
+            Bloquear usuario
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 mt-1" id="block-desc">
+          <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+            <p className="text-sm text-amber-700">
+              <strong>{nombre}</strong> perderá acceso inmediato al marketplace.
+              Si está activo en este momento, su sesión quedará inválida en el próximo acceso.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">
+              Motivo del bloqueo
+              <span className="ml-1 text-xs font-normal text-gray-400">(opcional)</span>
+            </Label>
+            <Textarea
+              placeholder="Describe el motivo del bloqueo..."
+              value={motivo}
+              onChange={(e) => setMotivo(e.target.value)}
+              maxLength={500}
+              rows={3}
+              className="resize-none"
+              disabled={loading}
+            />
+            <p className="text-xs text-gray-400 text-right">{motivo.length}/500</p>
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose} disabled={loading}>Cancelar</Button>
+          <Button
+            variant="destructive"
+            onClick={() => onConfirm(motivo.trim())}
+            disabled={loading}
+          >
+            {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Bloqueando...</> : "Confirmar bloqueo"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -320,14 +428,15 @@ function EmptyPubs({ label }: { label: string }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AdminUserProfilePage() {
-  const { id } = useParams<{ id: string }>();
-  const router = useRouter();
+  const { id }   = useParams<{ id: string }>();
+  const router   = useRouter();
 
-  const [usuario, setUsuario] = useState<UsuarioDetalle | null>(null);
+  const [usuario,       setUsuario]       = useState<UsuarioDetalle | null>(null);
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading,       setLoading]       = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
+  const [editOpen,      setEditOpen]      = useState(false);
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -348,47 +457,15 @@ export default function AdminUserProfilePage() {
     load();
   }, [id]);
 
-  function confirmToggleBloqueo() {
-    if (!usuario) return;
-    const accion = usuario.bloqueado ? "Desbloquear" : "Bloquear";
-    toast(`¿${accion} a ${usuario.nombre}?`, {
-      description: usuario.bloqueado
-        ? "El usuario recuperará acceso al marketplace."
-        : "El usuario perderá acceso al marketplace.",
-      action: { label: accion, onClick: doToggleBloqueo },
-      cancel: { label: "Cancelar", onClick: () => {} },
-      duration: 8000,
-    });
-  }
-
-  async function doToggleBloqueo() {
-    if (!usuario) return;
-    setActionLoading(true);
-    try {
-      const res = await fetch(`/api/admin/usuarios/${usuario.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bloqueado: !usuario.bloqueado }),
-      });
-      if (!res.ok) throw new Error();
-      const updated: UsuarioDetalle = await res.json();
-      setUsuario(updated);
-      toast.success(updated.bloqueado ? "Usuario bloqueado" : "Usuario desbloqueado");
-    } catch {
-      toast.error("Error al actualizar el usuario");
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
+  // ── Verificar / Quitar verificación ──────────────────────────────────────────
   async function toggleVerificado() {
     if (!usuario) return;
     setActionLoading(true);
     try {
       const res = await fetch(`/api/admin/usuarios/${usuario.id}`, {
-        method: "PATCH",
+        method:  "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ verificado: !usuario.verificado }),
+        body:    JSON.stringify({ verificado: !usuario.verificado }),
       });
       if (!res.ok) throw new Error();
       const updated: UsuarioDetalle = await res.json();
@@ -401,6 +478,63 @@ export default function AdminUserProfilePage() {
     }
   }
 
+  // ── Bloquear con motivo ───────────────────────────────────────────────────────
+  async function handleConfirmBlock(motivo: string) {
+    if (!usuario) return;
+    setBlockDialogOpen(false);
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin/usuarios/${usuario.id}`, {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          bloqueado:     true,
+          motivoBloqueo: motivo || null,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const updated: UsuarioDetalle = await res.json();
+      setUsuario(updated);
+      toast.success("Usuario bloqueado correctamente");
+    } catch {
+      toast.error("Error al bloquear el usuario");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  // ── Desbloquear con confirmación ──────────────────────────────────────────────
+  function confirmDesbloquear() {
+    if (!usuario) return;
+    toast(`¿Desbloquear a ${usuario.nombre}?`, {
+      description: "El usuario recuperará acceso completo al marketplace.",
+      action:  { label: "Desbloquear", onClick: doDesbloquear },
+      cancel:  { label: "Cancelar",   onClick: () => {} },
+      duration: 8000,
+    });
+  }
+
+  async function doDesbloquear() {
+    if (!usuario) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin/usuarios/${usuario.id}`, {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ bloqueado: false, motivoBloqueo: null }),
+      });
+      if (!res.ok) throw new Error();
+      const updated: UsuarioDetalle = await res.json();
+      setUsuario(updated);
+      toast.success("Usuario desbloqueado correctamente");
+    } catch {
+      toast.error("Error al desbloquear el usuario");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  // ── Loading / Not found ───────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -420,7 +554,7 @@ export default function AdminUserProfilePage() {
     );
   }
 
-  const byEstado = (estado: string) => publicaciones.filter((p) => p.estado === estado);
+  const byEstado  = (estado: string) => publicaciones.filter((p) => p.estado === estado);
   const aprobadas = byEstado("APROBADA");
   const pendientes = byEstado("PENDIENTE");
   const rechazadas = byEstado("RECHAZADA");
@@ -448,7 +582,7 @@ export default function AdminUserProfilePage() {
             {/* Details */}
             <div className="flex-1 min-w-0">
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-3 flex-wrap mb-2">
                     <h1 className="text-2xl font-bold text-gray-900">{usuario.nombre}</h1>
                     <RolBadge rol={usuario.rol} />
@@ -473,11 +607,32 @@ export default function AdminUserProfilePage() {
                         {usuario.semestre && ` · Semestre ${usuario.semestre}`}
                       </div>
                     )}
+                    {usuario.telefono && (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-gray-400" />
+                        {usuario.telefono}
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-gray-400" />
-                      Miembro desde {new Date(usuario.creadoEn).toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" })}
+                      Miembro desde {new Date(usuario.creadoEn).toLocaleDateString("es-CO", {
+                        year: "numeric", month: "long", day: "numeric",
+                      })}
                     </div>
                   </div>
+
+                  {/* Motivo de bloqueo */}
+                  {usuario.bloqueado && usuario.motivoBloqueo && (
+                    <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3 max-w-md">
+                      <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-0.5">
+                          Motivo del bloqueo
+                        </p>
+                        <p className="text-sm text-red-600">{usuario.motivoBloqueo}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Action buttons */}
@@ -513,25 +668,33 @@ export default function AdminUserProfilePage() {
                       )}
                     </Button>
 
-                    <Button
-                      variant={usuario.bloqueado ? "outline" : "destructive"}
-                      size="sm"
-                      className={`rounded-xl gap-2 ${
-                        usuario.bloqueado
-                          ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                          : ""
-                      }`}
-                      onClick={confirmToggleBloqueo}
-                      disabled={actionLoading}
-                    >
-                      {actionLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : usuario.bloqueado ? (
-                        <><Unlock className="w-4 h-4" />Desbloquear</>
-                      ) : (
-                        <><Lock className="w-4 h-4" />Bloquear</>
-                      )}
-                    </Button>
+                    {usuario.bloqueado ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                        onClick={confirmDesbloquear}
+                        disabled={actionLoading}
+                      >
+                        {actionLoading
+                          ? <Loader2 className="w-4 h-4 animate-spin" />
+                          : <><Unlock className="w-4 h-4" />Desbloquear</>
+                        }
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="rounded-xl gap-2"
+                        onClick={() => setBlockDialogOpen(true)}
+                        disabled={actionLoading}
+                      >
+                        {actionLoading
+                          ? <Loader2 className="w-4 h-4 animate-spin" />
+                          : <><Lock className="w-4 h-4" />Bloquear</>
+                        }
+                      </Button>
+                    )}
                   </div>
                 )}
 
@@ -546,10 +709,10 @@ export default function AdminUserProfilePage() {
               {/* Stats grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
                 {[
-                  { label: "Total", value: usuario._count.publicaciones, color: "text-[#881a1d]" },
-                  { label: "Aprobadas", value: aprobadas.length, color: "text-green-600" },
-                  { label: "Pendientes", value: pendientes.length, color: "text-yellow-600" },
-                  { label: "Rechazadas", value: rechazadas.length, color: "text-red-600" },
+                  { label: "Total",     value: usuario._count.publicaciones, color: "text-[#881a1d]"  },
+                  { label: "Aprobadas", value: aprobadas.length,             color: "text-green-600" },
+                  { label: "Pendientes", value: pendientes.length,           color: "text-yellow-600" },
+                  { label: "Rechazadas", value: rechazadas.length,           color: "text-red-600"   },
                 ].map(({ label, value, color }) => (
                   <div key={label} className="bg-gray-50 rounded-xl p-4 text-center">
                     <p className={`text-2xl font-bold ${color}`}>{value}</p>
@@ -567,9 +730,9 @@ export default function AdminUserProfilePage() {
         <TabsList className="bg-white border rounded-xl p-1 gap-1 h-auto flex-wrap">
           {[
             { value: "todas",      label: "Todas",      count: publicaciones.length },
-            { value: "aprobadas",  label: "Aprobadas",  count: aprobadas.length },
-            { value: "pendientes", label: "Pendientes", count: pendientes.length },
-            { value: "rechazadas", label: "Rechazadas", count: rechazadas.length },
+            { value: "aprobadas",  label: "Aprobadas",  count: aprobadas.length    },
+            { value: "pendientes", label: "Pendientes", count: pendientes.length   },
+            { value: "rechazadas", label: "Rechazadas", count: rechazadas.length   },
           ].map(({ value, label, count }) => (
             <TabsTrigger key={value} value={value} className="rounded-lg text-sm">
               {label} <span className="ml-1.5 text-xs opacity-70">({count})</span>
@@ -610,6 +773,15 @@ export default function AdminUserProfilePage() {
           onSuccess={(u) => setUsuario(u)}
         />
       )}
+
+      {/* Block Dialog */}
+      <BlockDialog
+        nombre={usuario.nombre}
+        open={blockDialogOpen}
+        onClose={() => setBlockDialogOpen(false)}
+        onConfirm={handleConfirmBlock}
+        loading={actionLoading}
+      />
     </div>
   );
 }
