@@ -4,6 +4,18 @@
 
 @layer base {
   :root {
+    /* Colores base shadcn/ui — evita fondos transparentes en modales */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --border: 0 0% 90%;
+
+    /* Colores UCP */
     --ucp-rojo: #881a1d;
     --ucp-naranja: #c55f23;
     --ucp-amarillo: #f4c222;
