@@ -22,13 +22,11 @@ export default function RegisterPage() {
 
   const emailTyped = email.includes("@");
   const ucpEmail = isUcpEmail(email);
-  // Ambos roles requieren correo @ucp.edu.co
   const showEmailWarning = emailTyped && !ucpEmail;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Validar dominio UCP para AMBOS roles
     if (!isUcpEmail(email)) {
       toast.error("Solo se permiten correos institucionales @ucp.edu.co");
       return;
@@ -75,9 +73,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col lg:flex-row">
 
-      {/* ══════════════ PANEL IZQUIERDO — Marca ══════════════ */}
+      {/* ══════════════ PANEL IZQUIERDO — Marca (solo desktop) ══════════════ */}
       <motion.div
         className="hidden lg:flex flex-col w-[44%] relative overflow-hidden"
         style={{ background: "linear-gradient(140deg, #881a1d 0%, #9e2124 50%, #c55f23 100%)" }}
@@ -197,212 +195,242 @@ export default function RegisterPage() {
       </motion.div>
 
       {/* ══════════════ PANEL DERECHO — Formulario ══════════════ */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 bg-white overflow-y-auto">
-        <motion.div
-          className="w-full max-w-[420px] py-8"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          {/* Logo móvil */}
-          <div className="lg:hidden mb-8 text-center">
-            <Link href="/" className="inline-flex items-center gap-2.5">
-              <div className="w-10 h-10 bg-[#881a1d] rounded-xl flex items-center justify-center">
-                <span className="text-white font-black text-sm">UCP</span>
-              </div>
-              <span className="font-bold text-gray-900 text-lg">UCP Marketplace</span>
-            </Link>
-          </div>
+      <div className="flex-1 flex flex-col bg-white overflow-y-auto">
 
-          {/* Selector de rol (móvil) */}
-          <div className="lg:hidden mb-6">
-            <p className="text-sm font-semibold text-gray-700 mb-2">Tipo de cuenta</p>
-            <div className="grid grid-cols-2 gap-2">
+        {/* ── Banner de marca SOLO MÓVIL ─────────────────────────────────── */}
+        <div
+          className="lg:hidden relative overflow-hidden flex-shrink-0"
+          style={{ background: "linear-gradient(140deg, #881a1d 0%, #9e2124 50%, #c55f23 100%)" }}
+        >
+          <div
+            className="absolute inset-0 opacity-[0.07]"
+            style={{
+              backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+              backgroundSize: "22px 22px",
+            }}
+          />
+          <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3" />
+
+          <div className="relative z-10 px-6 pt-10 pb-16 flex flex-col items-center text-center">
+            {/* Logo */}
+            <Link href="/" className="flex flex-col items-center gap-2 mb-5">
+              <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-xl">
+                <span className="text-[#881a1d] font-black text-base leading-none">UCP</span>
+              </div>
+              <div>
+                <p className="text-white font-black text-lg leading-tight">UCP Marketplace</p>
+                <p className="text-white/60 text-xs">Universidad Católica de Pereira</p>
+              </div>
+            </Link>
+
+            {/* Selector de rol como chips */}
+            <div className="flex gap-2">
               {(["ESTUDIANTE", "ALIADO"] as const).map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setRol(r)}
-                  className={`p-3 rounded-xl border-2 text-sm font-semibold transition-all ${
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                     rol === r
-                      ? "border-[#881a1d] bg-[#881a1d]/5 text-[#881a1d]"
-                      : "border-gray-200 text-gray-500 hover:border-gray-300"
+                      ? "bg-white text-[#881a1d] shadow-lg"
+                      : "bg-white/15 text-white/80 border border-white/20"
                   }`}
                 >
-                  {r === "ESTUDIANTE" ? "Estudiante" : "Aliado"}
+                  {r === "ESTUDIANTE"
+                    ? <><GraduationCap className="w-3.5 h-3.5" /> Estudiante</>
+                    : <><Building2 className="w-3.5 h-3.5" /> Aliado</>
+                  }
                 </button>
               ))}
             </div>
           </div>
+        </div>
 
-          <h1 className="text-3xl font-black text-gray-900 mb-1">Crear cuenta</h1>
-          <p className="text-gray-500 text-sm mb-6">
-            {rol === "ALIADO"
-              ? "Regístrate como aliado con tu correo @ucp.edu.co"
-              : "Regístrate con tu correo institucional UCP"}
-          </p>
+        {/* ── Tarjeta del formulario ──────────────────────────────────────── */}
+        <div className="flex-1 flex flex-col items-center px-4 sm:px-8 lg:px-10 lg:justify-center">
+          <motion.div
+            className="w-full max-w-[420px] bg-white rounded-2xl lg:rounded-none shadow-xl lg:shadow-none p-6 sm:p-7 lg:p-0 -mt-8 lg:mt-0 relative"
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mb-1">Crear cuenta</h1>
+            <p className="text-gray-500 text-sm mb-5">
+              {rol === "ALIADO"
+                ? "Regístrate como aliado con tu correo @ucp.edu.co"
+                : "Regístrate con tu correo institucional UCP"}
+            </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Nombre */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Nombre completo
-              </label>
-              <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input
-                  name="nombre"
-                  type="text"
-                  placeholder="Juan Pérez"
-                  required
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#881a1d] focus:ring-2 focus:ring-[#881a1d]/10 transition-all text-sm bg-gray-50 hover:bg-white focus:bg-white placeholder:text-gray-400"
-                />
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Nombre */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Nombre completo
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <input
+                    name="nombre"
+                    type="text"
+                    placeholder="Juan Pérez"
+                    required
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#881a1d] focus:ring-2 focus:ring-[#881a1d]/10 transition-all text-sm bg-gray-50 hover:bg-white focus:bg-white placeholder:text-gray-400"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Correo */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Correo institucional
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input
-                  name="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nombre@ucp.edu.co"
-                  required
-                  className={`w-full pl-10 pr-10 py-3 rounded-xl border transition-all text-sm bg-gray-50 hover:bg-white focus:bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
-                    emailTyped && ucpEmail
-                      ? "border-green-400 focus:border-green-500 focus:ring-green-500/10"
-                      : emailTyped && !ucpEmail
-                      ? "border-amber-400 focus:border-amber-500 focus:ring-amber-500/10"
-                      : "border-gray-200 focus:border-[#881a1d] focus:ring-[#881a1d]/10"
-                  }`}
-                />
-                {emailTyped && (
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                    {ucpEmail ? (
-                      <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <AlertCircle className="w-4 h-4 text-amber-500" />
-                    )}
-                  </div>
-                )}
+              {/* Correo */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Correo institucional
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <input
+                    name="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="nombre@ucp.edu.co"
+                    required
+                    className={`w-full pl-10 pr-10 py-3 rounded-xl border transition-all text-sm bg-gray-50 hover:bg-white focus:bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
+                      emailTyped && ucpEmail
+                        ? "border-green-400 focus:border-green-500 focus:ring-green-500/10"
+                        : emailTyped && !ucpEmail
+                        ? "border-amber-400 focus:border-amber-500 focus:ring-amber-500/10"
+                        : "border-gray-200 focus:border-[#881a1d] focus:ring-[#881a1d]/10"
+                    }`}
+                  />
+                  {emailTyped && (
+                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                      {ucpEmail ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-amber-500" />
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Alerta correo no UCP (aplica para ambos roles) */}
-            <AnimatePresence>
-              {showEmailWarning && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className="overflow-hidden"
-                >
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                    <div className="flex items-start gap-2.5">
-                      <Info className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-red-800 font-semibold text-sm mb-1">
-                          Correo institucional requerido
-                        </p>
-                        <p className="text-red-700 text-xs leading-relaxed">
-                          Solo se permiten correos <strong>@ucp.edu.co</strong>. Si no tienes correo institucional, escribe a{" "}
-                          <a
-                            href="mailto:admin@ucp.edu.co?subject=Solicitud%20de%20Acceso"
-                            className="font-semibold underline"
-                          >
-                            admin@ucp.edu.co
-                          </a>
-                          .
-                        </p>
+              {/* Alerta correo no UCP */}
+              <AnimatePresence>
+                {showEmailWarning && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-3.5">
+                      <div className="flex items-start gap-2.5">
+                        <Info className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-red-800 font-semibold text-sm mb-0.5">
+                            Correo institucional requerido
+                          </p>
+                          <p className="text-red-700 text-xs leading-relaxed">
+                            Solo se permiten correos <strong>@ucp.edu.co</strong>. Si no tienes correo institucional, escribe a{" "}
+                            <a
+                              href="mailto:admin@ucp.edu.co?subject=Solicitud%20de%20Acceso"
+                              className="font-semibold underline"
+                            >
+                              admin@ucp.edu.co
+                            </a>
+                            .
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-            {/* Contraseña */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Contraseña
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Mínimo 6 caracteres"
-                  required
-                  minLength={6}
-                  className="w-full pl-10 pr-12 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#881a1d] focus:ring-2 focus:ring-[#881a1d]/10 transition-all text-sm bg-gray-50 hover:bg-white focus:bg-white placeholder:text-gray-400"
-                />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+              {/* Contraseña */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Contraseña
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <input
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Mínimo 6 caracteres"
+                    required
+                    minLength={6}
+                    className="w-full pl-10 pr-12 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#881a1d] focus:ring-2 focus:ring-[#881a1d]/10 transition-all text-sm bg-gray-50 hover:bg-white focus:bg-white placeholder:text-gray-400"
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
+
+              {/* Confirmar contraseña */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Confirmar contraseña
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <input
+                    name="confirmPassword"
+                    type="password"
+                    placeholder="Repite tu contraseña"
+                    required
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#881a1d] focus:ring-2 focus:ring-[#881a1d]/10 transition-all text-sm bg-gray-50 hover:bg-white focus:bg-white placeholder:text-gray-400"
+                  />
+                </div>
+              </div>
+
+              {/* Botón */}
+              <motion.button
+                type="submit"
+                disabled={isLoading || showEmailWarning}
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-[#881a1d] hover:bg-[#6d1416] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-[#881a1d]/20 mt-2 cursor-pointer"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    Creando cuenta...
+                  </>
+                ) : (
+                  <>
+                    Crear cuenta gratis
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </motion.button>
+            </form>
+
+            <p className="mt-5 text-sm text-gray-600 text-center">
+              ¿Ya tienes cuenta?{" "}
+              <Link href="/login" className="text-[#881a1d] font-bold hover:underline">
+                Inicia sesión
+              </Link>
+            </p>
+
+            {/* Info email solo móvil */}
+            <div className="lg:hidden mt-5 flex items-start gap-2.5 bg-red-50 rounded-xl p-3.5 border border-red-100">
+              <Info className="w-4 h-4 text-[#881a1d] shrink-0 mt-0.5" />
+              <p className="text-gray-600 text-xs leading-relaxed">
+                Necesitas un correo <strong className="text-gray-800">@ucp.edu.co</strong> para registrarte.
+              </p>
             </div>
 
-            {/* Confirmar contraseña */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Confirmar contraseña
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input
-                  name="confirmPassword"
-                  type="password"
-                  placeholder="Repite tu contraseña"
-                  required
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#881a1d] focus:ring-2 focus:ring-[#881a1d]/10 transition-all text-sm bg-gray-50 hover:bg-white focus:bg-white placeholder:text-gray-400"
-                />
-              </div>
-            </div>
-
-            {/* Botón */}
-            <motion.button
-              type="submit"
-              disabled={isLoading || showEmailWarning}
-              whileTap={{ scale: 0.98 }}
-              className="w-full bg-[#881a1d] hover:bg-[#6d1416] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-[#881a1d]/20 mt-2 cursor-pointer"
-            >
-              {isLoading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  Creando cuenta...
-                </>
-              ) : (
-                <>
-                  Crear cuenta gratis
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </motion.button>
-          </form>
-
-          <p className="mt-5 text-sm text-gray-600 text-center">
-            ¿Ya tienes cuenta?{" "}
-            <Link href="/login" className="text-[#881a1d] font-bold hover:underline">
-              Inicia sesión
-            </Link>
-          </p>
-
-          <p className="mt-4 text-xs text-gray-400 text-center">
-            Al registrarte aceptas los términos de uso de UCP Marketplace
-          </p>
-        </motion.div>
+            <p className="mt-4 mb-6 text-xs text-gray-400 text-center">
+              Al registrarte aceptas los términos de uso de UCP Marketplace
+            </p>
+          </motion.div>
+        </div>
       </div>
     </div>
   );
