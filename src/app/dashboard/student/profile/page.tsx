@@ -237,15 +237,15 @@ export default function ProfilePage() {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-ucp-rojo mb-1">{rating}</div>
-                    <div className="text-sm text-gray-600">Calificación</div>
-                    <div className="flex items-center justify-center gap-1 mt-1">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mt-4 sm:mt-6">
+                  <div className="bg-gray-50 rounded-lg p-3 sm:p-4 text-center">
+                    <div className="text-xl sm:text-2xl font-bold text-ucp-rojo mb-0.5">{rating}</div>
+                    <div className="text-xs sm:text-sm text-gray-600 mb-1">Calificación</div>
+                    <div className="flex items-center justify-center gap-0.5">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
-                          className={`w-4 h-4 ${
+                          className={`w-3 h-3 sm:w-4 sm:h-4 ${
                             star <= Math.floor(rating)
                               ? 'fill-yellow-400 text-yellow-400'
                               : 'text-gray-300'
@@ -255,22 +255,22 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-ucp-rojo mb-1">{totalSales}</div>
-                    <div className="text-sm text-gray-600">Ventas</div>
+                  <div className="bg-gray-50 rounded-lg p-3 sm:p-4 text-center">
+                    <div className="text-xl sm:text-2xl font-bold text-ucp-rojo mb-0.5">{totalSales}</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Ventas</div>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-ucp-rojo mb-1">{activeProducts.length}</div>
-                    <div className="text-sm text-gray-600">Publicaciones</div>
+                  <div className="bg-gray-50 rounded-lg p-3 sm:p-4 text-center">
+                    <div className="text-xl sm:text-2xl font-bold text-ucp-rojo mb-0.5">{activeProducts.length}</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Publicaciones</div>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
+                  <div className="bg-gray-50 rounded-lg p-3 sm:p-4 text-center">
                     <div className="flex items-center justify-center gap-1 text-gray-600 mb-1">
-                      <Calendar className="w-4 h-4" />
+                      <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
-                    <div className="text-sm text-gray-600">Miembro desde</div>
-                    <div className="text-sm font-medium text-gray-900">{memberSince}</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Miembro desde</div>
+                    <div className="text-xs sm:text-sm font-medium text-gray-900 mt-0.5">{memberSince}</div>
                   </div>
                 </div>
               )}
@@ -281,14 +281,16 @@ export default function ProfilePage() {
 
       {/* Products Tabs */}
       <Tabs defaultValue="active" className="w-full">
-        <TabsList className="mb-6 bg-white border rounded-lg p-1">
-          <TabsTrigger value="active" className="rounded-md">
-            Publicaciones Activas ({activeProducts.length})
-          </TabsTrigger>
-          <TabsTrigger value="reviews" className="rounded-md">
-            Reseñas (45)
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto mb-4 -mx-1 px-1">
+          <TabsList className="bg-white border rounded-lg p-1 inline-flex w-max sm:w-auto">
+            <TabsTrigger value="active" className="rounded-md text-xs sm:text-sm whitespace-nowrap">
+              Publicaciones Activas ({activeProducts.length})
+            </TabsTrigger>
+            <TabsTrigger value="reviews" className="rounded-md text-xs sm:text-sm whitespace-nowrap">
+              Reseñas (45)
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="active">
           {activeProducts.length > 0 ? (
@@ -299,8 +301,8 @@ export default function ProfilePage() {
             </div>
           ) : (
             <Card className="border-0 shadow-lg rounded-xl">
-              <CardContent className="p-16 text-center">
-                <p className="text-gray-500">Este vendedor no tiene publicaciones activas</p>
+              <CardContent className="p-8 sm:p-14 text-center">
+                <p className="text-gray-500 text-sm">Este vendedor no tiene publicaciones activas</p>
               </CardContent>
             </Card>
           )}
