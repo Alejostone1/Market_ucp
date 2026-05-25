@@ -44,6 +44,11 @@ export async function GET(request: NextRequest) {
         orderBy: { creadoEn: 'desc' },
         skip:  (page - 1) * limit,
         take:  limit,
+        include: {
+          usuario: {
+            select: { id: true, nombre: true, avatarUrl: true },
+          },
+        },
       }),
       prisma.notificacion.count({ where }),
       prisma.notificacion.count({ where: { usuarioId, leida: false } }),

@@ -41,7 +41,7 @@ export default function AdminNotificacionesPage() {
         const response = await fetch('/api/notificaciones');
         if (response.ok) {
           const data = await response.json();
-          setNotificaciones(data);
+          setNotificaciones(Array.isArray(data) ? data : (data.notificaciones ?? []));
         }
       } catch (error) {
         console.error('Error al cargar notificaciones:', error);
