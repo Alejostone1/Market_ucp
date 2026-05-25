@@ -213,7 +213,7 @@ function MessagesContent() {
             </div>
 
             {/* Área de chat */}
-            <div className="md:col-span-8 flex flex-col bg-gray-50">
+            <div className="md:col-span-8 flex flex-col bg-gray-50 min-h-0 overflow-hidden">
               {selectedChat ? (
                 <>
                   {/* Header del chat */}

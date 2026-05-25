@@ -664,7 +664,7 @@ function MessagesContent() {
         {/* ── Right: Chat panel ────────────────────────────────────────────── */}
         <div
           className={`
-            flex-1 flex flex-col bg-gray-50 min-w-0
+            flex-1 flex flex-col bg-gray-50 min-w-0 min-h-0 overflow-hidden
             ${mobileView === "list" ? "hidden md:flex" : "flex"}
           `}
         >

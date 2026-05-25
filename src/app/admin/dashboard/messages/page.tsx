@@ -597,7 +597,7 @@ function MessagesContent() {
         </div>
 
         {/* ── Right ── */}
-        <div className={`flex-1 flex flex-col bg-gray-50 min-w-0 ${mobile === "list" ? "hidden md:flex" : "flex"}`}>
+        <div className={`flex-1 flex flex-col bg-gray-50 min-w-0 min-h-0 overflow-hidden ${mobile === "list" ? "hidden md:flex" : "flex"}`}>
           {!selectedConv ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
               <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mb-4">
