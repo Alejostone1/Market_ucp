@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// Aumentar límite de body para subida de imágenes (Vercel: 4.5 MB por defecto → 10 MB)
+export const maxDuration = 30; // segundos máximos de ejecución en Vercel
+
 // ── Util: convertir File a base64 data URL y guardar en BD ────────────────────
 // Usamos data URLs (base64) para evitar dependencias de sistema de archivos.
 // Es la solución más portable para entornos de desarrollo locales.
