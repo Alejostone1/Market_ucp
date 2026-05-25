@@ -572,7 +572,7 @@ function UsuarioModal({ mode, usuario, open, onClose, onSuccess, onBloquear }: U
 export default function AdminUsuariosPage() {
   const [usuarios, setUsuarios] = useState<UsuarioItem[]>([]);
   const [stats, setStats] = useState<Stats>({ total: 0, bloqueados: 0, verificados: 0, estudiantes: 0, aliados: 0 });
-  const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 15, total: 0, totalPages: 1 });
+  const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 8, total: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -593,7 +593,7 @@ export default function AdminUsuariosPage() {
   const fetchUsuarios = useCallback(async (page = 1) => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(page), limit: "15" });
+      const params = new URLSearchParams({ page: String(page), limit: "8" });
       if (filterRol !== "todos") params.set("rol", filterRol);
       if (filterEstado === "verificado") params.set("verificado", "true");
       else if (filterEstado === "sin-verificar") params.set("verificado", "false");
@@ -887,48 +887,98 @@ export default function AdminUsuariosPage() {
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-lg"
-            disabled={pagination.page <= 1 || loading}
-            onClick={() => fetchUsuarios(pagination.page - 1)}
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Anterior
-          </Button>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-100">
 
+          {/* Info de resultados */}
+          <p className="text-xs text-gray-500 shrink-0">
+            Mostrando{" "}
+            <span className="font-semibold text-gray-700">
+              {(pagination.page - 1) * 8 + 1}–
+              {Math.min(pagination.page * 8, pagination.total)}
+            </span>{" "}
+            de{" "}
+            <span className="font-semibold text-gray-700">{pagination.total}</span>{" "}
+            usuarios
+          </p>
+
+          {/* Controles */}
           <div className="flex items-center gap-1">
-            {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-              const p = i + 1;
-              return (
-                <button
-                  key={p}
-                  onClick={() => fetchUsuarios(p)}
-                  className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-                    p === pagination.page
-                      ? "bg-[#881a1d] text-white"
-                      : "text-gray-600 hover:bg-gray-100"
-                  }`}
-                >
-                  {p}
-                </button>
-              );
-            })}
-            {pagination.totalPages > 5 && <span className="text-gray-400 px-1">...</span>}
-          </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-lg"
-            disabled={pagination.page >= pagination.totalPages || loading}
-            onClick={() => fetchUsuarios(pagination.page + 1)}
-          >
-            Siguiente
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+            {/* Anterior */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-lg h-8 px-2.5 gap-1 text-xs"
+              disabled={pagination.page <= 1 || loading}
+              onClick={() => fetchUsuarios(pagination.page - 1)}
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Anterior</span>
+            </Button>
+
+            {/* Páginas con ventana deslizante */}
+            {(() => {
+              const total   = pagination.totalPages;
+              const current = pagination.page;
+              const pages: (number | "...")[] = [];
+
+              if (total <= 7) {
+                // Pocas páginas — mostrar todas
+                for (let i = 1; i <= total; i++) pages.push(i);
+              } else {
+                // Siempre mostrar primera
+                pages.push(1);
+
+                if (current > 3) pages.push("...");
+
+                // Ventana alrededor de la página actual
+                const start = Math.max(2, current - 1);
+                const end   = Math.min(total - 1, current + 1);
+                for (let i = start; i <= end; i++) pages.push(i);
+
+                if (current < total - 2) pages.push("...");
+
+                // Siempre mostrar última
+                pages.push(total);
+              }
+
+              return pages.map((p, idx) =>
+                p === "..." ? (
+                  <span
+                    key={`ellipsis-${idx}`}
+                    className="w-8 h-8 flex items-center justify-center text-gray-400 text-sm select-none"
+                  >
+                    ···
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => fetchUsuarios(p as number)}
+                    disabled={loading}
+                    className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all ${
+                      p === current
+                        ? "bg-[#881a1d] text-white shadow-sm scale-105"
+                        : "text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              );
+            })()}
+
+            {/* Siguiente */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-lg h-8 px-2.5 gap-1 text-xs"
+              disabled={pagination.page >= pagination.totalPages || loading}
+              onClick={() => fetchUsuarios(pagination.page + 1)}
+            >
+              <span className="hidden sm:inline">Siguiente</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         </div>
       )}
 
