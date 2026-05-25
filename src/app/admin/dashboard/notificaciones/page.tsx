@@ -154,18 +154,18 @@ export default function AdminNotificacionesPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Notificaciones</h1>
-      <p className="text-gray-600 mb-8">
+      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Notificaciones</h1>
+      <p className="text-gray-600 mb-6 text-sm">
         Gestiona las notificaciones del sistema
       </p>
 
       {/* Filters */}
       <Card className="border-0 shadow-lg rounded-xl mb-6">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4 justify-between">
-            <div className="flex gap-2">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
+            <div className="flex flex-wrap gap-2">
               <Select value={filterTipo} onValueChange={setFilterTipo}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="flex-1 min-w-[140px] sm:w-40">
                   <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -179,7 +179,7 @@ export default function AdminNotificacionesPage() {
               </Select>
 
               <Select value={filterLeida} onValueChange={setFilterLeida}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="flex-1 min-w-[120px] sm:w-40">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -194,7 +194,7 @@ export default function AdminNotificacionesPage() {
               <Button
                 onClick={handleMarkAllAsRead}
                 variant="outline"
-                className="rounded-full"
+                className="rounded-full w-full sm:w-auto"
               >
                 <Check className="w-4 h-4 mr-2" />
                 Marcar todas como leídas
@@ -219,47 +219,47 @@ export default function AdminNotificacionesPage() {
               }`}
             >
               <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <Avatar className="w-12 h-12">
+                <div className="flex items-start gap-3">
+                  <Avatar className="w-10 h-10 shrink-0">
                     <AvatarImage src={notificacion.usuario.avatarUrl || undefined} />
                     <AvatarFallback>{notificacion.usuario.nombre[0]}</AvatarFallback>
                   </Avatar>
 
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-1">
-                          <h3 className="font-semibold text-gray-900">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-gray-900 text-sm">
                             {notificacion.usuario.nombre}
                           </h3>
                           {getTipoBadge(notificacion.tipo)}
                           {!notificacion.leida && (
-                            <Badge className="bg-blue-600 text-white">Nueva</Badge>
+                            <Badge className="bg-blue-600 text-white text-[10px]">Nueva</Badge>
                           )}
                         </div>
-                        
-                        <p className="text-gray-700">{notificacion.mensaje}</p>
-                        
-                        <p className="text-xs text-gray-500 mt-2">
+                        <p className="text-gray-700 text-sm">{notificacion.mensaje}</p>
+                        <p className="text-xs text-gray-500 mt-1">
                           {new Date(notificacion.creadoEn).toLocaleString()}
                         </p>
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 shrink-0">
                         {!notificacion.leida && (
                           <Button
                             onClick={() => handleMarkAsRead(notificacion.id)}
                             variant="outline"
                             size="sm"
+                            className="text-xs h-8"
                           >
-                            <Check className="w-4 h-4 mr-1" />
-                            Marcar leída
+                            <Check className="w-3.5 h-3.5 mr-1" />
+                            <span className="hidden xs:inline">Marcar leída</span>
                           </Button>
                         )}
                         <Button
                           onClick={() => handleDelete(notificacion.id)}
                           variant="ghost"
                           size="sm"
+                          className="h-8 w-8 p-0"
                         >
                           <Trash2 className="w-4 h-4 text-red-500" />
                         </Button>

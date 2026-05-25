@@ -85,13 +85,13 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Administrativo</h1>
-      <p className="text-gray-600 mb-8">
+      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Dashboard Administrativo</h1>
+      <p className="text-gray-600 mb-6 text-sm">
         Resumen general del sistema UCP Marketplace
       </p>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <Card className="border-0 shadow-lg rounded-xl hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">

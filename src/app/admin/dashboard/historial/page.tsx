@@ -244,20 +244,20 @@ export default function HistorialPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <History className="w-8 h-8 text-[#881a1d]" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <History className="w-6 h-6 sm:w-8 sm:h-8 text-[#881a1d] shrink-0" />
             Historial de Moderación
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 mt-1 text-sm">
             Registro completo de cambios de estado en publicaciones
           </p>
         </div>
         <Button
           onClick={handleExport}
           disabled={exporting}
-          className="bg-[#881a1d] hover:bg-red-800 text-white rounded-full gap-2"
+          className="bg-[#881a1d] hover:bg-red-800 text-white rounded-full gap-2 w-full sm:w-auto"
         >
           <Download className="w-4 h-4" />
           {exporting ? "Exportando..." : "Exportar CSV"}
@@ -279,7 +279,7 @@ export default function HistorialPage() {
           )}
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {/* Search */}
           <div className="relative lg:col-span-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -321,7 +321,7 @@ export default function HistorialPage() {
           </select>
 
           {/* Date range */}
-          <div className="flex gap-2">
+          <div className="flex flex-col xs:flex-row gap-2 sm:col-span-2 lg:col-span-1">
             <input
               type="date"
               value={desde}
@@ -350,7 +350,7 @@ export default function HistorialPage() {
         </p>
       )}
 
-      {/* Table */}
+      {/* Table / Cards */}
       <Card className="border-0 shadow-lg rounded-xl overflow-hidden">
         {loading ? (
           <div className="text-center py-16 text-gray-500">Cargando historial...</div>
@@ -360,86 +360,137 @@ export default function HistorialPage() {
             <p>No hay registros que coincidan con los filtros</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-700 whitespace-nowrap">Fecha</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Publicación</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-700 whitespace-nowrap">Cambio de estado</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Responsable</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Nota</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {registros.map((r) => (
-                  <tr key={r.id} className="hover:bg-gray-50 transition-colors">
-                    {/* Fecha */}
-                    <td className="px-4 py-3 whitespace-nowrap text-gray-500 text-xs">
-                      {formatFecha(r.creadoEn)}
-                    </td>
-
-                    {/* Publicación */}
-                    <td className="px-4 py-3 max-w-[220px]">
-                      <p className="font-medium text-gray-900 truncate" title={r.publicacion.titulo}>
-                        {r.publicacion.titulo}
-                      </p>
-                      <Badge variant="secondary" className="text-[10px] mt-0.5">
-                        {r.publicacion.tipo}
-                      </Badge>
-                    </td>
-
-                    {/* Cambio de estado */}
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <EstadoBadge estado={r.estadoAnterior} />
-                        <ArrowRight className="w-3 h-3 text-gray-400 shrink-0" />
-                        <EstadoBadge estado={r.estadoNuevo} />
-                      </div>
-                    </td>
-
-                    {/* Responsable */}
-                    <td className="px-4 py-3">
-                      {r.esAutomatico ? (
-                        <div className="flex items-center gap-2 text-gray-500">
-                          <Bot className="w-4 h-4 text-blue-500 shrink-0" />
-                          <span className="text-xs">Sistema</span>
-                        </div>
-                      ) : r.admin ? (
+          <>
+            {/* ── Desktop table ── */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-semibold text-gray-700 whitespace-nowrap">Fecha</th>
+                    <th className="text-left px-4 py-3 font-semibold text-gray-700">Publicación</th>
+                    <th className="text-left px-4 py-3 font-semibold text-gray-700 whitespace-nowrap">Cambio de estado</th>
+                    <th className="text-left px-4 py-3 font-semibold text-gray-700">Responsable</th>
+                    <th className="text-left px-4 py-3 font-semibold text-gray-700">Nota</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {registros.map((r) => (
+                    <tr key={r.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 whitespace-nowrap text-gray-500 text-xs">
+                        {formatFecha(r.creadoEn)}
+                      </td>
+                      <td className="px-4 py-3 max-w-[220px]">
+                        <p className="font-medium text-gray-900 truncate" title={r.publicacion.titulo}>
+                          {r.publicacion.titulo}
+                        </p>
+                        <Badge variant="secondary" className="text-[10px] mt-0.5">
+                          {r.publicacion.tipo}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <Avatar className="w-6 h-6">
-                            <AvatarImage src={r.admin.avatarUrl ?? undefined} />
-                            <AvatarFallback className="text-[10px] bg-[#881a1d]/10 text-[#881a1d]">
-                              {r.admin.nombre[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0">
+                          <EstadoBadge estado={r.estadoAnterior} />
+                          <ArrowRight className="w-3 h-3 text-gray-400 shrink-0" />
+                          <EstadoBadge estado={r.estadoNuevo} />
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        {r.esAutomatico ? (
+                          <div className="flex items-center gap-2 text-gray-500">
+                            <Bot className="w-4 h-4 text-blue-500 shrink-0" />
+                            <span className="text-xs">Sistema</span>
+                          </div>
+                        ) : r.admin ? (
+                          <div className="flex items-center gap-2">
+                            <Avatar className="w-6 h-6">
+                              <AvatarImage src={r.admin.avatarUrl ?? undefined} />
+                              <AvatarFallback className="text-[10px] bg-[#881a1d]/10 text-[#881a1d]">
+                                {r.admin.nombre[0]}
+                              </AvatarFallback>
+                            </Avatar>
                             <p className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
                               {r.admin.nombre}
                             </p>
+                            <UserCheck className="w-3 h-3 text-green-500 shrink-0" />
                           </div>
-                          <UserCheck className="w-3 h-3 text-green-500 shrink-0" />
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-400">—</span>
-                      )}
-                    </td>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 max-w-[240px]">
+                        {r.nota ? (
+                          <p className="text-xs text-gray-600 line-clamp-2" title={r.nota}>
+                            {r.nota}
+                          </p>
+                        ) : (
+                          <span className="text-xs text-gray-300">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-                    {/* Nota */}
-                    <td className="px-4 py-3 max-w-[240px]">
-                      {r.nota ? (
-                        <p className="text-xs text-gray-600 line-clamp-2" title={r.nota}>
-                          {r.nota}
-                        </p>
+            {/* ── Mobile cards ── */}
+            <div className="md:hidden divide-y divide-gray-100">
+              {registros.map((r) => (
+                <div key={r.id} className="p-4 space-y-3">
+                  {/* Publicación + tipo */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2">
+                        {r.publicacion.titulo}
+                      </p>
+                      <Badge variant="secondary" className="text-[10px] mt-1">
+                        {r.publicacion.tipo}
+                      </Badge>
+                    </div>
+                    <p className="text-[10px] text-gray-400 shrink-0 whitespace-nowrap mt-0.5">
+                      {formatFecha(r.creadoEn)}
+                    </p>
+                  </div>
+
+                  {/* Cambio de estado */}
+                  <div className="flex items-center gap-2">
+                    <EstadoBadge estado={r.estadoAnterior} />
+                    <ArrowRight className="w-3 h-3 text-gray-400 shrink-0" />
+                    <EstadoBadge estado={r.estadoNuevo} />
+                  </div>
+
+                  {/* Responsable + nota */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      {r.esAutomatico ? (
+                        <>
+                          <Bot className="w-4 h-4 text-blue-500 shrink-0" />
+                          <span>Sistema</span>
+                        </>
+                      ) : r.admin ? (
+                        <>
+                          <Avatar className="w-5 h-5">
+                            <AvatarImage src={r.admin.avatarUrl ?? undefined} />
+                            <AvatarFallback className="text-[8px] bg-[#881a1d]/10 text-[#881a1d]">
+                              {r.admin.nombre[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="truncate max-w-[100px]">{r.admin.nombre}</span>
+                          <UserCheck className="w-3 h-3 text-green-500 shrink-0" />
+                        </>
                       ) : (
-                        <span className="text-xs text-gray-300">—</span>
+                        <span className="text-gray-300">—</span>
                       )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                    {r.nota && (
+                      <p className="text-[10px] text-gray-500 italic line-clamp-1 text-right max-w-[140px]">
+                        {r.nota}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </Card>
 

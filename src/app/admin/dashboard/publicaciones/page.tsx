@@ -427,15 +427,15 @@ export default function AdminPublicacionesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestión de Publicaciones</h1>
-          <p className="text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Gestión de Publicaciones</h1>
+          <p className="text-gray-600 text-sm">
             Modera y gestiona las publicaciones del marketplace
           </p>
         </div>
-        <Button 
-          className="bg-ucp-rojo hover:bg-red-700 text-white rounded-full"
+        <Button
+          className="bg-ucp-rojo hover:bg-red-700 text-white rounded-full w-full sm:w-auto"
           onClick={() => setShowCreateModal(true)}
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -444,7 +444,7 @@ export default function AdminPublicacionesPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <Card className="border-0 shadow-lg rounded-xl">
           <CardContent className="p-6 text-center">
             <div className="text-3xl font-bold text-ucp-rojo mb-1">
@@ -494,9 +494,9 @@ export default function AdminPublicacionesPage() {
               />
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Select value={filterEstado} onValueChange={setFilterEstado}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="flex-1 min-w-[130px]">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -509,7 +509,7 @@ export default function AdminPublicacionesPage() {
               </Select>
 
               <Select value={filterTipo} onValueChange={setFilterTipo}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="flex-1 min-w-[130px]">
                   <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -526,33 +526,33 @@ export default function AdminPublicacionesPage() {
       </Card>
 
       {/* View Mode Toggle and Pagination Info */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-white border rounded-lg p-1">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-1 bg-white border rounded-lg p-1">
             <Button
               variant={viewMode === "grid" ? "default" : "ghost"}
               size="sm"
               onClick={() => setViewMode("grid")}
-              className="rounded-md"
+              className="rounded-md h-8 px-3"
             >
-              <Grid className="w-4 h-4 mr-2" />
-              Grid
+              <Grid className="w-4 h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Grid</span>
             </Button>
             <Button
               variant={viewMode === "list" ? "default" : "ghost"}
               size="sm"
               onClick={() => setViewMode("list")}
-              className="rounded-md"
+              className="rounded-md h-8 px-3"
             >
-              <List className="w-4 h-4 mr-2" />
-              Lista
+              <List className="w-4 h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Lista</span>
             </Button>
           </div>
-          <span className="text-sm text-gray-600">
-            Mostrando {startIndex + 1}-{Math.min(endIndex, filteredPublicaciones.length)} de {filteredPublicaciones.length} publicaciones
+          <span className="text-sm text-gray-500">
+            {filteredPublicaciones.length} publicaciones
           </span>
         </div>
-        
+
         {totalPages > 1 && (
           <div className="flex items-center gap-2">
             <Button
@@ -563,8 +563,8 @@ export default function AdminPublicacionesPage() {
             >
               Anterior
             </Button>
-            <span className="text-sm font-medium px-3">
-              Página {currentPage} de {totalPages}
+            <span className="text-sm font-medium px-2 whitespace-nowrap">
+              {currentPage}/{totalPages}
             </span>
             <Button
               variant="outline"

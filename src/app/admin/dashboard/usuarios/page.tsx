@@ -798,52 +798,47 @@ export default function AdminUsuariosPage() {
           {usuarios.map((u) => (
             <Card key={u.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="p-5">
-                <div className="flex items-center gap-4">
-                  {/* Avatar */}
-                  <Avatar className="w-12 h-12 shrink-0">
-                    <AvatarImage src={u.avatarUrl ?? undefined} />
-                    <AvatarFallback className="bg-[#881a1d]/10 text-[#881a1d] font-semibold">
-                      {u.nombre.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    {/* Avatar */}
+                    <Avatar className="w-10 h-10 sm:w-12 sm:h-12 shrink-0">
+                      <AvatarImage src={u.avatarUrl ?? undefined} />
+                      <AvatarFallback className="bg-[#881a1d]/10 text-[#881a1d] font-semibold">
+                        {u.nombre.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
 
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <span className="font-semibold text-gray-900 text-sm">{u.nombre}</span>
-                      <RolBadge rol={u.rol} />
-                      <EstadoBadge bloqueado={u.bloqueado} verificado={u.verificado} />
-                    </div>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <span className="font-semibold text-gray-900 text-sm">{u.nombre}</span>
+                        <RolBadge rol={u.rol} />
+                        <EstadoBadge bloqueado={u.bloqueado} verificado={u.verificado} />
+                      </div>
 
-                    <p className="text-sm text-gray-500 truncate">{u.correo}</p>
+                      <p className="text-xs text-gray-500 truncate">{u.correo}</p>
 
-                    <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400 flex-wrap">
-                      {u.facultad && (
-                        <span className="flex items-center gap-1">
-                          <BookOpen className="w-3 h-3" />
-                          {u.facultad}
-                          {u.semestre && ` · Sem. ${u.semestre}`}
-                        </span>
-                      )}
-                      {u.telefono && (
-                        <span className="flex items-center gap-1">
-                          <Phone className="w-3 h-3" />
-                          {u.telefono}
-                        </span>
-                      )}
-                      <span>{u._count.publicaciones} publicación{u._count.publicaciones !== 1 ? "es" : ""}</span>
-                      <span>Desde {new Date(u.creadoEn).toLocaleDateString("es-CO")}</span>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-400 flex-wrap">
+                        {u.facultad && (
+                          <span className="flex items-center gap-1">
+                            <BookOpen className="w-3 h-3" />
+                            <span className="truncate max-w-[120px]">{u.facultad}</span>
+                            {u.semestre && ` · S${u.semestre}`}
+                          </span>
+                        )}
+                        <span>{u._count.publicaciones} pub.</span>
+                        <span>Desde {new Date(u.creadoEn).toLocaleDateString("es-CO")}</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Actions — columna derecha fija */}
-                  <div className="flex flex-col items-end gap-2 shrink-0 min-w-[140px]">
-                    {/* Fila superior: Ver perfil + Editar */}
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap sm:flex-col sm:items-end shrink-0">
                     <div className="flex items-center gap-2">
                       <Link href={`/admin/dashboard/usuarios/${u.id}`}>
                         <Button variant="outline" size="sm" className="rounded-lg gap-1.5 text-xs h-8 whitespace-nowrap">
                           <Eye className="w-3.5 h-3.5" />
-                          Ver perfil
+                          <span className="hidden xs:inline">Ver perfil</span>
                         </Button>
                       </Link>
 
@@ -855,16 +850,15 @@ export default function AdminUsuariosPage() {
                           onClick={() => setEditTarget(u)}
                         >
                           <Pencil className="w-3.5 h-3.5" />
-                          Editar
+                          <span className="hidden xs:inline">Editar</span>
                         </Button>
                       )}
                     </div>
 
-                    {/* Fila inferior: Bloquear / Desbloquear (botón completo, siempre visible) */}
                     {u.rol !== "ADMIN" ? (
                       <Button
                         size="sm"
-                        className={`w-full rounded-lg gap-1.5 text-xs h-8 font-semibold ${
+                        className={`rounded-lg gap-1.5 text-xs h-8 font-semibold whitespace-nowrap ${
                           u.bloqueado
                             ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                             : "bg-red-600 hover:bg-red-700 text-white"
@@ -872,15 +866,15 @@ export default function AdminUsuariosPage() {
                         onClick={() => setBloqueoTarget(u)}
                       >
                         {u.bloqueado ? (
-                          <><Unlock className="w-3.5 h-3.5" />Desbloquear cuenta</>
+                          <><Unlock className="w-3.5 h-3.5" /><span className="hidden xs:inline">Desbloquear</span></>
                         ) : (
-                          <><Lock className="w-3.5 h-3.5" />Bloquear cuenta</>
+                          <><Lock className="w-3.5 h-3.5" /><span className="hidden xs:inline">Bloquear</span></>
                         )}
                       </Button>
                     ) : (
-                      <div className="flex items-center gap-1.5 text-xs text-purple-600 bg-purple-50 rounded-lg px-3 py-1.5 border border-purple-100 w-full justify-center">
+                      <div className="flex items-center gap-1.5 text-xs text-purple-600 bg-purple-50 rounded-lg px-3 py-1.5 border border-purple-100">
                         <Shield className="w-3.5 h-3.5" />
-                        Administrador
+                        <span className="hidden xs:inline">Admin</span>
                       </div>
                     )}
                   </div>

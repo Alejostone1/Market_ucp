@@ -158,7 +158,7 @@ export default function AdminReportesPage() {
   return (
     <div>
       {/* Cabecera */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Gestión de Reportes</h1>
           <p className="text-gray-500 text-sm mt-1">
@@ -166,8 +166,8 @@ export default function AdminReportesPage() {
           </p>
         </div>
         {pendingCount > 0 && (
-          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2">
-            <AlertTriangle className="w-4 h-4 text-amber-600" />
+          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 self-start">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
             <span className="text-sm font-bold text-amber-700">
               {pendingCount} pendiente{pendingCount !== 1 ? "s" : ""}
             </span>
@@ -176,7 +176,7 @@ export default function AdminReportesPage() {
       </div>
 
       {/* Tabs de estado */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit">
+      <div className="flex flex-wrap gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-full sm:w-fit">
         {ESTADO_TABS.map((tab) => (
           <button
             key={tab.value}
@@ -221,31 +221,29 @@ export default function AdminReportesPage() {
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
               >
                 <div className="flex gap-0">
-                  {/* Thumbnail de la publicación */}
-                  <div className="w-28 h-28 shrink-0 bg-gray-100">
+                  {/* Thumbnail */}
+                  <div className="w-20 sm:w-28 h-auto shrink-0 bg-gray-100 self-stretch">
                     {thumb ? (
                       <img src={thumb} alt={reporte.publicacion.titulo} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300">
-                        <Flag className="w-6 h-6" />
+                      <div className="w-full h-full min-h-[80px] flex items-center justify-center text-gray-300">
+                        <Flag className="w-5 h-5" />
                       </div>
                     )}
                   </div>
 
                   {/* Contenido */}
-                  <div className="flex-1 p-4 min-w-0">
-                    <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex-1 p-3 sm:p-4 min-w-0">
+                    {/* Motivo + estado + acciones */}
+                    <div className="flex flex-col xs:flex-row xs:items-start xs:justify-between gap-2 mb-2">
                       <div className="min-w-0">
-                        {/* Motivo + estado */}
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="text-sm font-bold text-gray-900">
                             {MOTIVO_LABELS[reporte.motivo] ?? reporte.motivo}
                           </span>
                           <EstadoBadge estado={reporte.estado} />
                         </div>
-
-                        {/* Publicación */}
-                        <p className="text-sm text-gray-600 truncate font-medium">
+                        <p className="text-sm text-gray-600 font-medium line-clamp-1">
                           {reporte.publicacion.titulo}{" "}
                           <PubEstadoBadge estado={reporte.publicacion.estado} />
                         </p>
@@ -254,22 +252,22 @@ export default function AdminReportesPage() {
                         </p>
                       </div>
 
-                      {/* Acciones rápidas */}
+                      {/* Acciones */}
                       <div className="flex items-center gap-2 shrink-0">
                         <Link href={`/publication/${reporte.publicacion.id}`} target="_blank">
-                          <Button variant="outline" size="sm" className="rounded-lg h-8 text-xs gap-1">
+                          <Button variant="outline" size="sm" className="rounded-lg h-8 text-xs gap-1 px-2 sm:px-3">
                             <ExternalLink className="w-3 h-3" />
-                            Ver
+                            <span className="hidden sm:inline">Ver</span>
                           </Button>
                         </Link>
                         {reporte.estado === "PENDIENTE" && (
                           <Button
                             size="sm"
                             onClick={() => openDialog(reporte)}
-                            className="bg-[#881a1d] hover:bg-[#6d1416] text-white rounded-lg h-8 text-xs gap-1"
+                            className="bg-[#881a1d] hover:bg-[#6d1416] text-white rounded-lg h-8 text-xs gap-1 px-2 sm:px-3"
                           >
                             <AlertOctagon className="w-3 h-3" />
-                            Resolver
+                            <span className="hidden xs:inline">Resolver</span>
                           </Button>
                         )}
                       </div>
@@ -277,19 +275,19 @@ export default function AdminReportesPage() {
 
                     {/* Descripción del reporte */}
                     {reporte.descripcion && (
-                      <p className="text-xs text-gray-500 italic bg-gray-50 rounded-lg px-3 py-2 mb-2 line-clamp-2">
+                      <p className="text-xs text-gray-500 italic bg-gray-50 rounded-lg px-2 py-1.5 mb-2 line-clamp-2">
                         "{reporte.descripcion}"
                       </p>
                     )}
 
                     {/* Meta */}
-                    <div className="flex items-center gap-3 text-xs text-gray-400">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {timeAgo(reporte.creadoEn)}
                       </span>
-                      <span>·</span>
-                      <span>Reportado por {reporte.reportante.nombre}</span>
+                      <span className="hidden xs:inline">·</span>
+                      <span className="hidden xs:inline">Por {reporte.reportante.nombre}</span>
                       <span className="hidden sm:inline">·</span>
                       <span className="hidden sm:inline text-gray-300">{reporte.reportante.correo}</span>
                     </div>
