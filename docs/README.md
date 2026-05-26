@@ -52,8 +52,6 @@ Las pruebas de aceptación fueron ejecutadas manualmente durante **mayo de 2026*
 ⚠ CON OBSERVACIONES: 0 (0%)
 ✗ RECHAZADAS: 0 (0%)
 
-text
-
 ---
 
 ## 🔍 Detalle de Pruebas por Historia de Usuario
@@ -69,7 +67,9 @@ text
 | **Credenciales incorrectas** | NO permite el ingreso | ✓ Mensaje genérico sin revelar cuál campo falló |
 | **Cuenta bloqueada** | NO permite el ingreso | ✓ Alerta con motivo y pasos para contactar |
 
-> 📸 *Evidencia:* `evidencia/HU-01_login_exitoso.png`, `evidencia/HU-01_error_credenciales.png`
+> 📸 *Evidencia:*  
+> ![Login exitoso](pruebas/evidencia/HU-01_login_exitoso.png)  
+> ![Error credenciales](pruebas/evidencia/HU-01_error_credenciales.png)
 
 ---
 
@@ -84,7 +84,9 @@ text
 | **Correo ya registrado** | NO crea la cuenta | ✓ Mensaje genérico por seguridad |
 | **Datos inválidos** | Muestra errores específicos por campo | ✓ Valida dominio @ucp.edu.co correctamente |
 
-> 📸 *Evidencia:* `evidencia/HU-02_registro_exitoso.png`, `evidencia/HU-02_correo_repetido.png`
+> 📸 *Evidencia:*  
+> ![Registro exitoso](pruebas/evidencia/HU-02_registro_exitoso.png)  
+> ![Correo repetido](pruebas/evidencia/HU-02_correo_repetido.png)
 
 ---
 
@@ -99,7 +101,8 @@ text
 | **Avatar inválido** | NO guarda si no es JPG/PNG o excede 2 MB | ✓ Rechaza formatos no permitidos |
 | **Cancelación** | NO aplica cambios | ✓ Regresa con datos originales |
 
-> 📸 *Evidencia:* `evidencia/HU-03_editar_perfil.png`, `evidencia/HU-03_avatar_invalido.png`
+> 📸 *Evidencia:*  
+> ![Editar perfil](pruebas/evidencia/HU-03_editar_perfil.png)  
 
 ---
 
@@ -114,7 +117,8 @@ text
 | **Límite alcanzado** | NO permite si hay 10 publicaciones activas | ✓ Bloquea correctamente |
 | **Archivos inválidos** | NO procesa sin validar | ✓ Solo permite PNG y JPG |
 
-> 📸 *Evidencia:* `evidencia/HU-04_crear_publicacion.png`, `evidencia/HU-04_limite_alcanzado.png`
+> 📸 *Evidencia:*  
+> ![Crear publicación](pruebas/evidencia/HU-04_crear_publicacion.png)  
 
 ---
 
@@ -129,7 +133,8 @@ text
 | **Publicación tipo Evento** | Muestra cupos disponibles | ✓ Visualiza en listado y detalle |
 | **Publicación no aprobada** | NO muestra si está PENDIENTE/RECHAZADA (si no eres autor ni admin) | ✓ Muestra mensaje de no disponible |
 
-> 📸 *Evidencia:* `evidencia/HU-05_detalle_completo.png`, `evidencia/HU-05_evento_cupos.png`
+> 📸 *Evidencia:*  
+> ![Detalle completo](pruebas/evidencia/HU-05_detalle_completo.png)  
 
 ---
 
@@ -144,7 +149,9 @@ text
 | **Sin resultados** | Muestra mensaje claro | ✓ Indica que no hay resultados |
 | **Limpiar filtros** | Restablece todos los filtros | ✓ Limpia correctamente |
 
-> 📸 *Evidencia:* `evidencia/HU-06_filtros_resultados.png`, `evidencia/HU-06_sin_resultados.png`
+> 📸 *Evidencia:*  
+> ![Filtros con resultados](pruebas/evidencia/HU-06_filtros_resultados.png)  
+> ![Sin resultados](pruebas/evidencia/HU-06_sin_resultados.png)
 
 ---
 
@@ -159,7 +166,8 @@ text
 | **Publicación propia** | NO permite agregar | ✓ Funciona correctamente |
 | **Vendedor no confirma en 24h** | Libera cupos | ✓ Se gestiona vía mensajería (mejora futura: automatizar) |
 
-> 📸 *Evidencia:* `evidencia/HU-07_reserva_exitosa.png`, `evidencia/HU-07_publicacion_propia.png`
+> 📸 *Evidencia:*  
+> ![Reserva exitosa](pruebas/evidencia/HU-07_reserva_exitosa.png)  
 
 ---
 
@@ -174,7 +182,8 @@ text
 | **Quitar favorito** | Elimina sin confirmación adicional | ✓ Funciona correctamente |
 | **Favorito ya no disponible** | Marca con aviso visual | ✓ El sistema mantiene el registro (mejora: notificar al usuario) |
 
-> 📸 *Evidencia:* `evidencia/HU-08_agregar_favorito.png`, `evidencia/HU-08_quitar_favorito.png`
+> 📸 *Evidencia:*  
+> ![Agregar favorito](pruebas/evidencia/HU-08_agregar_favorito.png)  
 
 ---
 
@@ -189,7 +198,8 @@ text
 | **Conversación duplicada** | NO crea nueva, continúa hilo | ✓ Continúa correctamente |
 | **Límite de mensajes excedido** | Retorna error HTTP 429 | ✓ Funciona correctamente |
 
-> 📸 *Evidencia:* `evidencia/HU-09_mensaje_enviado.png`, `evidencia/HU-09_limite_excedido.png`
+> 📸 *Evidencia:*  
+> ![Mensaje enviado](pruebas/evidencia/HU-09_mensaje_enviado.png)  
 
 ---
 
@@ -204,7 +214,8 @@ text
 | **Marcado como leída** | Marca y reordena | ✓ Funciona sin problemas |
 | **Configuración de preferencias** | Persiste cambios | ✓ Funciona correctamente |
 
-> 📸 *Evidencia:* `evidencia/HU-10_notificaciones.png`, `evidencia/HU-10_marcar_leidas.png`
+> 📸 *Evidencia:*  
+> ![Notificaciones](pruebas/evidencia/HU-10_notificaciones.png)  
 
 ---
 
@@ -219,7 +230,8 @@ text
 | **Reporte duplicado** | NO acepta reporte previo | ✓ Muestra mensaje apropiado |
 | **Cancelación del reporte** | NO registra el reporte | ✓ Cancela sin registrar |
 
-> 📸 *Evidencia:* `evidencia/HU-11_reportar.png`, `evidencia/HU-11_reporte_duplicado.png`
+> 📸 *Evidencia:*  
+> ![Reportar](pruebas/evidencia/HU-11_reportar.png)  
 
 ---
 
@@ -234,7 +246,8 @@ text
 | **Rechazo de publicación** | Requiere nota justificativa obligatoria | ✓ Registra nota y notifica |
 | **Rechazo sin nota** | NO procesa | ✓ Bloquea correctamente |
 
-> 📸 *Evidencia:* `evidencia/HU-12_aprobar.png`, `evidencia/HU-12_rechazar.png`
+> 📸 *Evidencia:*  
+> ![Aprobar publicación](pruebas/evidencia/HU-12_aprobar.png)  
 
 ---
 
@@ -249,7 +262,8 @@ text
 | **Bloqueo de usuario** | Invalida sesiones activas | ✓ Bloquea correctamente |
 | **Cambio de rol** | Notifica por correo | ✓ Funciona perfectamente |
 
-> 📸 *Evidencia:* `evidencia/HU-13_filtrar_usuarios.png`, `evidencia/HU-13_bloquear.png`
+> 📸 *Evidencia:*  
+> ![Filtrar usuarios](pruebas/evidencia/HU-13_gestion_usuarios.png) 
 
 ---
 
@@ -264,7 +278,8 @@ text
 | **Exportación del reporte** | Genera PDF o CSV | ✓ Funciona correctamente |
 | **Acceso rápido a moderación** | Redirige a reportes pendientes | ✓ Funciona correctamente |
 
-> 📸 *Evidencia:* `evidencia/HU-14_dashboard.png`, `evidencia/HU-14_exportar.png`
+> 📸 *Evidencia:*  
+> ![Dashboard](pruebas/evidencia/HU-14_dashboard.png)  
 
 ---
 
@@ -279,7 +294,8 @@ text
 | **Aplicación de filtros** | Actualiza en tiempo real | ✓ Filtra correctamente |
 | **Exportación a CSV** | Genera CSV con filtros aplicados | ✓ Se descarga correctamente |
 
-> 📸 *Evidencia:* `evidencia/HU-15_historial.png`, `evidencia/HU-15_exportar_csv.png`
+> 📸 *Evidencia:*  
+> ![Historial de moderación](pruebas/evidencia/HU-15_historial.png)  
 
 ---
 
@@ -324,10 +340,8 @@ El sistema ha demostrado ser **completamente funcional** y **lista para producci
 
 ## 📁 Documentación Adjunta
 
-- `PRUEBAS_GITHUB_ACTUALIZADO.md` - Resumen ejecutivo y estado de todas las HU
-- `evidencia/` - Carpeta con capturas de pantalla 
-
-
+- `pruebas/PRUEBAS_GITHUB_ACTUALIZADO.md` - Resumen ejecutivo y estado de todas las HU
+- `pruebas/evidencia/` - Carpeta con capturas de pantalla
 
 ---
 
