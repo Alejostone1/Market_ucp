@@ -143,22 +143,7 @@ text
 
 ---
 
-## 📸 Evidencia Visual
 
-Las capturas de pantalla se encuentran en la carpeta `evidencia/` . Cada historia de usuario cuenta con al menos una imagen representativa.
-
-**Ejemplo de organización:**
-evidencia/
-├── HU-01_login_exitoso.png
-├── HU-01_error_credenciales.png
-├── HU-02_registro_exitoso.png
-├── ...
-
-text
-
-> 🔍 *Nota:* Para ver las imágenes, asegúrate de que la carpeta `evidencia/` contenga los archivos correspondientes. Si aún no están disponibles, las pruebas fueron documentadas en el informe original.
-
----
 
 ## 📁 Documentación de Evidencia
 
